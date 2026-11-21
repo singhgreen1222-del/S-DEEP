@@ -78,6 +78,9 @@
         <span id="hostBadgeTop" class="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium">
           Host Face: Pending
         </span>
+        <button type="button" id="autopilotBadgeTop" class="px-2.5 py-1 rounded-full bg-[#2BA640]/20 text-[#2BA640] border border-[#2BA640]/40 font-semibold">
+          Auto-Pilot: ON
+        </button>
       </div>
     </div>
 
@@ -405,6 +408,41 @@
 
     <!-- TAB 6: DEDICATED AUTO-UPLOAD PIPELINE -->
     <section id="tab-autoupload" class="tab-panel hidden space-y-6">
+      <div class="glass-card rounded-xl p-5 space-y-4 border border-[#3EA6FF]/40">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white">0. Master Auto-Pilot (5G / Background &amp; Pause Control)</h2>
+            <p id="autopilotStatusText" class="text-xs text-[#3EA6FF] mt-0.5">Status: ACTIVE — Runs automatically when connected to fast 5G/Wi-Fi</p>
+          </div>
+          <button type="button" id="toggleAutopilotBtn" class="px-4 py-2 rounded-full bg-[#2BA640] hover:opacity-90 text-white font-bold text-xs">
+            Pause Auto-Pilot
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2 border-t border-[#303030]">
+          <label class="flex items-center justify-between p-3 rounded-xl bg-[#121212] border border-[#3E3E3E] cursor-pointer">
+            <span>Run Only on 5G / High-Speed Internet</span>
+            <input id="only5gCheck" type="checkbox" checked class="accent-[#3EA6FF] w-4 h-4" />
+          </label>
+          <div class="p-3 rounded-xl bg-[#121212] border border-[#3E3E3E] flex items-center justify-between">
+            <span class="text-[#AAAAAA]">Live Network:</span>
+            <span id="liveNetBadge" class="font-bold text-[#3EA6FF]">Checking...</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2 border-t border-[#303030]">
+          <div>
+            <label class="block text-[#AAAAAA] mb-1" for="ghRepoInput">GitHub Repo (username/repo)</label>
+            <input id="ghRepoInput" type="text" value="singhgreen1222-del/sdeep" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
+          </div>
+          <div>
+            <label class="block text-[#AAAAAA] mb-1" for="ghTokenInput">GitHub Token (workflow scope, optional)</label>
+            <input id="ghTokenInput" type="password" placeholder="ghp_xxxx (to Pause/Run from app)" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
+          </div>
+          <div class="flex items-end gap-2">
+            <button type="button" id="ghRunNowBtn" class="flex-1 py-2 rounded-lg bg-[#3EA6FF] text-[#0F0F0F] font-bold">Run Now</button>
+            <button type="button" id="ghSyncPauseBtn" class="flex-1 py-2 rounded-lg bg-[#282828] border border-[#3E3E3E] text-white font-semibold">Sync Pause</button>
+          </div>
+        </div>
+      </div>
       <div class="glass-card rounded-xl p-5 space-y-4 border border-emerald-500/30">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -858,7 +896,112 @@ jobs:
     });
 
 
+
+    let autopilotEnabled = true;
+    try {
+      const savedAp = localStorage.getItem("creatorauto_autopilot");
+      if (savedAp !== null) autopilotEnabled = savedAp === "true";
+      const savedRepo = localStorage.getItem("creatorauto_gh_repo");
+      if (savedRepo) document.getElementById("ghRepoInput").value = savedRepo;
+      const savedTok = localStorage.getItem("creatorauto_gh_token");
+      if (savedTok) document.getElementById("ghTokenInput").value = savedTok;
+    } catch (e) {}
+
+    function updateNetworkAndAutopilotUI() {
+      const only5g = document.getElementById("only5gCheck").checked;
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const online = navigator.onLine;
+      let netText = online ? "Online (Ready)" : "Offline";
+      let fastEnough = online;
+      if (online && conn) {
+        const eff = (conn.effectiveType || "4g").toUpperCase();
+        const dl = conn.downlink ? `${conn.downlink} Mbps` : "";
+        netText = `${eff} ${dl}`.trim();
+        if (only5g && (conn.effectiveType === "slow-2g" || conn.effectiveType === "2g" || conn.effectiveType === "3g")) {
+          fastEnough = false;
+        }
+      }
+      const netEl = document.getElementById("liveNetBadge");
+      netEl.textContent = netText;
+      netEl.className = fastEnough ? "font-bold text-[#2BA640]" : "font-bold text-amber-400";
+
+      const topBtn = document.getElementById("autopilotBadgeTop");
+      const toggleBtn = document.getElementById("toggleAutopilotBtn");
+      const statusTxt = document.getElementById("autopilotStatusText");
+      if (!autopilotEnabled) {
+        topBtn.textContent = "Auto-Pilot: PAUSED";
+        topBtn.className = "px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold";
+        toggleBtn.textContent = "Resume Auto-Pilot";
+        toggleBtn.className = "px-4 py-2 rounded-full bg-[#FF0000] hover:bg-[#CC0000] text-white font-bold text-xs";
+        statusTxt.textContent = "Status: PAUSED — No automatic uploads will run until you resume";
+        statusTxt.className = "text-xs text-amber-300 mt-0.5";
+      } else if (!fastEnough) {
+        topBtn.textContent = "Auto-Pilot: WAITING 5G";
+        topBtn.className = "px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold";
+        toggleBtn.textContent = "Pause Auto-Pilot";
+        toggleBtn.className = "px-4 py-2 rounded-full bg-[#2BA640] hover:opacity-90 text-white font-bold text-xs";
+        statusTxt.textContent = "Status: Waiting for 5G / High-Speed Internet connection";
+        statusTxt.className = "text-xs text-amber-300 mt-0.5";
+      } else {
+        topBtn.textContent = "Auto-Pilot: ON";
+        topBtn.className = "px-2.5 py-1 rounded-full bg-[#2BA640]/20 text-[#2BA640] border border-[#2BA640]/40 font-semibold";
+        toggleBtn.textContent = "Pause Auto-Pilot";
+        toggleBtn.className = "px-4 py-2 rounded-full bg-[#2BA640] hover:opacity-90 text-white font-bold text-xs";
+        statusTxt.textContent = "Status: ACTIVE — Ready for automatic weekly execution";
+        statusTxt.className = "text-xs text-[#3EA6FF] mt-0.5";
+      }
+    }
+
+    function toggleAutopilot() {
+      autopilotEnabled = !autopilotEnabled;
+      try { localStorage.setItem("creatorauto_autopilot", String(autopilotEnabled)); } catch (e) {}
+      updateNetworkAndAutopilotUI();
+      showToast(autopilotEnabled ? "Auto-Pilot Resumed" : "Auto-Pilot Paused");
+    }
+
+    document.getElementById("toggleAutopilotBtn").addEventListener("click", toggleAutopilot);
+    document.getElementById("autopilotBadgeTop").addEventListener("click", () => {
+      document.querySelector('[data-tab="autoupload"]').click();
+    });
+    document.getElementById("only5gCheck").addEventListener("change", updateNetworkAndAutopilotUI);
+    window.addEventListener("online", updateNetworkAndAutopilotUI);
+    window.addEventListener("offline", updateNetworkAndAutopilotUI);
+
+    async function callGithubWorkflow(action) {
+      const repo = document.getElementById("ghRepoInput").value.trim();
+      const tok = document.getElementById("ghTokenInput").value.trim();
+      if (!repo || !tok) {
+        showToast("Enter GitHub Repo & Token first");
+        return;
+      }
+      try {
+        localStorage.setItem("creatorauto_gh_repo", repo);
+        localStorage.setItem("creatorauto_gh_token", tok);
+      } catch (e) {}
+      const endpoint = action === "dispatch"
+        ? `https://api.github.com/repos/${repo}/actions/workflows/weekly.yml/dispatches`
+        : `https://api.github.com/repos/${repo}/actions/workflows/weekly.yml/${action}`;
+      try {
+        const res = await fetch(endpoint, {
+          method: action === "dispatch" ? "POST" : "PUT",
+          headers: { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json" },
+          body: action === "dispatch" ? JSON.stringify({ ref: "main" }) : undefined
+        });
+        if (res.ok || res.status === 204) {
+          showToast(action === "dispatch" ? "GitHub Auto-Pilot Started!" : `GitHub Schedule ${action}d!`);
+        } else {
+          showToast("GitHub API Error (" + res.status + ") — check repo/token");
+        }
+      } catch (err) {
+        showToast("Network error calling GitHub");
+      }
+    }
+
+    document.getElementById("ghRunNowBtn").addEventListener("click", () => callGithubWorkflow("dispatch"));
+    document.getElementById("ghSyncPauseBtn").addEventListener("click", () => callGithubWorkflow(autopilotEnabled ? "enable" : "disable"));
+
     renderChannelSelector();
+    updateNetworkAndAutopilotUI();
           showToast(`Switched to ${getActiveChannel().name}`);
         });
       });
