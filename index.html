@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#070D1F" />
+  <meta name="theme-color" content="#212121" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -19,43 +19,58 @@
   <style>
     body {
       font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
-      background-color: #070D1F;
-      color: #E2E8F0;
+      background-color: #0F0F0F;
+      color: #F1F1F1;
     }
     .glass-card {
-      background: rgba(17, 28, 58, 0.85);
-      border: 1px solid rgba(51, 65, 85, 0.7);
-      backdrop-filter: blur(10px);
+      background-color: #1F1F1F;
+      border: 1px solid #303030;
+    }
+    .yt-header {
+      background-color: #212121;
+      border-bottom: 1px solid #303030;
     }
     .tab-btn.active {
-      background-color: #00D09C;
-      color: #070D1F;
+      background-color: #282828;
+      color: #FF4E45;
+      border-left: 3px solid #FF0000;
       font-weight: 700;
     }
+    @media (max-width: 1023px) {
+      .tab-btn.active {
+        border-left: none;
+        border-bottom: 2px solid #FF0000;
+      }
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0B132B; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-track { background: #0F0F0F; }
+    ::-webkit-scrollbar-thumb { background: #3E3E3E; border-radius: 9999px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
   <!-- Top Navbar -->
-  <header class="sticky top-0 z-40 border-b border-slate-800 bg-[#0B132B]/95 backdrop-blur">
+  <header class="sticky top-0 z-40 yt-header">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div id="channelAvatar" class="w-10 h-10 rounded-xl bg-emerald-400 text-slate-950 font-extrabold flex items-center justify-center text-lg shadow-lg shadow-emerald-500/20">
-          SD
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-7 rounded-lg bg-[#FF0000] text-white flex items-center justify-center shadow">
+            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+          </div>
+          <div id="channelAvatar" class="w-9 h-9 rounded-full bg-[#3EA6FF] text-[#0F0F0F] font-extrabold flex items-center justify-center text-sm">
+            SD
+          </div>
         </div>
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <select id="channelSelect" aria-label="Select YouTube Channel" class="bg-slate-900 border border-slate-700 text-white text-xs sm:text-sm font-bold rounded-lg px-2.5 py-1 focus:outline-none focus:border-emerald-400"></select>
+            <select id="channelSelect" aria-label="Select YouTube Channel" class="bg-[#121212] border border-[#3E3E3E] text-white text-xs sm:text-sm font-bold rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#3EA6FF]"></select>
           </div>
-          <p id="channelSubtitle" class="text-xs text-slate-400 mt-0.5">Niche: Finance &amp; Share Market · 100% Free Automation</p>
+          <p id="channelSubtitle" class="text-xs text-[#AAAAAA] mt-0.5">Niche: Finance &amp; Share Market · 100% Free Automation</p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 text-xs">
-        <button type="button" id="installAppBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold flex items-center gap-1.5 border border-slate-700">
-          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-400"></i> Install App
+        <button type="button" id="installAppBtn" class="px-3 py-1.5 rounded-lg bg-[#282828] hover:bg-slate-700 text-white font-semibold flex items-center gap-1.5 border border-[#3E3E3E]">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-[#3EA6FF]"></i> Install App
         </button>
         <button type="button" id="googleAuthBtn" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-900 font-bold flex items-center gap-1.5 shadow">
           <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> <span id="googleAuthLabel">Google Verify &amp; Login</span>
@@ -66,40 +81,40 @@
       </div>
     </div>
 
-    <!-- 7 Dedicated Navigation Tabs -->
+    <!-- Mobile Navigation Tabs (hidden on lg desktop where sidebar is shown) -->
     <nav class="max-w-7xl mx-auto px-4 pb-2.5 flex items-center gap-1.5 overflow-x-auto" aria-label="Primary Navigation">
-      <button type="button" data-tab="channels" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+      <button type="button" data-tab="channels" class="tab-btn px-3 py-2 rounded-lg text-xs text-[#CCCCCC] hover:bg-[#282828] whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="tv" class="w-4 h-4"></i> Channels &amp; Niche
       </button>
       <button type="button" data-tab="calendar" class="tab-btn active px-3 py-2 rounded-lg text-xs whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="calendar-days" class="w-4 h-4"></i> Weekly Calendar
       </button>
-      <button type="button" data-tab="host" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+      <button type="button" data-tab="host" class="tab-btn px-3 py-2 rounded-lg text-xs text-[#CCCCCC] hover:bg-[#282828] whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="user-check" class="w-4 h-4"></i> AI Host Photo
       </button>
-      <button type="button" data-tab="voice" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+      <button type="button" data-tab="voice" class="tab-btn px-3 py-2 rounded-lg text-xs text-[#CCCCCC] hover:bg-[#282828] whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="mic" class="w-4 h-4"></i> Voice Clone
       </button>
-      <button type="button" data-tab="thumbnail" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+      <button type="button" data-tab="thumbnail" class="tab-btn px-3 py-2 rounded-lg text-xs text-[#CCCCCC] hover:bg-[#282828] whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="image" class="w-4 h-4"></i> Thumbnail Maker
       </button>
-      <button type="button" data-tab="autoupload" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+      <button type="button" data-tab="autoupload" class="tab-btn px-3 py-2 rounded-lg text-xs text-[#CCCCCC] hover:bg-[#282828] whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="upload-cloud" class="w-4 h-4"></i> Auto-Upload
       </button>
-      <button type="button" data-tab="analytics" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+      <button type="button" data-tab="analytics" class="tab-btn px-3 py-2 rounded-lg text-xs text-[#CCCCCC] hover:bg-[#282828] whitespace-nowrap flex items-center gap-1.5 transition">
         <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Analytics
       </button>
     </nav>
   </header>
 
   <!-- Context Ticker -->
-  <div class="bg-[#0F172A] border-b border-slate-800/80 text-xs py-2 px-4 overflow-x-auto">
-    <div id="channelTicker" class="max-w-7xl mx-auto flex items-center gap-6 whitespace-nowrap text-slate-300">
-      <span class="font-semibold text-emerald-400">As of 20 Nov 2026 (Verified):</span>
-      <span>NIFTY 50: <strong class="text-white">25,800.60</strong> <span class="text-emerald-400">(+1.12%)</span></span>
-      <span>SENSEX: <strong class="text-white">83,919.71</strong> <span class="text-emerald-400">(+898 pts)</span></span>
-      <span>BANK NIFTY: <strong class="text-white">64,635</strong> <span class="text-emerald-400">(Record High)</span></span>
-      <span>FII Net (20 Nov): <strong class="text-emerald-400">+₹10,308.42 Cr</strong></span>
+  <div class="bg-[#181818] border-b border-[#303030] text-xs py-2 px-4 overflow-x-auto">
+    <div id="channelTicker" class="max-w-7xl mx-auto flex items-center gap-6 whitespace-nowrap text-[#CCCCCC]">
+      <span class="font-semibold text-[#3EA6FF]">As of 20 Nov 2026 (Verified):</span>
+      <span>NIFTY 50: <strong class="text-white">25,800.60</strong> <span class="text-[#3EA6FF]">(+1.12%)</span></span>
+      <span>SENSEX: <strong class="text-white">83,919.71</strong> <span class="text-[#3EA6FF]">(+898 pts)</span></span>
+      <span>BANK NIFTY: <strong class="text-white">64,635</strong> <span class="text-[#3EA6FF]">(Record High)</span></span>
+      <span>FII Net (20 Nov): <strong class="text-[#3EA6FF]">+₹10,308.42 Cr</strong></span>
       <span>RBI Repo: <strong class="text-white">5.50%</strong></span>
       <span>USD/INR: <strong class="text-white">92.67</strong></span>
     </div>
@@ -112,20 +127,20 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-card rounded-xl p-5 space-y-4">
           <h2 class="text-lg font-bold text-white">1. Add Any YouTube Channel &amp; Auto-Generate</h2>
-          <p class="text-xs text-slate-300">Sirf apne YouTube channel ka link, language aur niche/topic batayein — app us channel ke liye bhi poora weekly plan, scripts, SEO tags aur GitHub Actions workflow bana dega.</p>
+          <p class="text-xs text-[#CCCCCC]">Sirf apne YouTube channel ka link, language aur niche/topic batayein — app us channel ke liye bhi poora weekly plan, scripts, SEO tags aur GitHub Actions workflow bana dega.</p>
           <form id="addChannelForm" class="space-y-3 text-xs">
             <div>
-              <label class="block text-slate-400 mb-1" for="newChannelUrl">YouTube Channel Link / Handle</label>
-              <input id="newChannelUrl" type="url" required placeholder="https://youtube.com/@yourchannel" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <label class="block text-[#AAAAAA] mb-1" for="newChannelUrl">YouTube Channel Link / Handle</label>
+              <input id="newChannelUrl" type="url" required placeholder="https://youtube.com/@yourchannel" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-slate-400 mb-1" for="newChannelName">Channel Name</label>
-                <input id="newChannelName" type="text" required placeholder="e.g. Tech With Deep" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+                <label class="block text-[#AAAAAA] mb-1" for="newChannelName">Channel Name</label>
+                <input id="newChannelName" type="text" required placeholder="e.g. Tech With Deep" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
               </div>
               <div>
-                <label class="block text-slate-400 mb-1" for="newChannelLang">Language</label>
-                <select id="newChannelLang" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                <label class="block text-[#AAAAAA] mb-1" for="newChannelLang">Language</label>
+                <select id="newChannelLang" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
                   <option value="Hindi / Hinglish">Hindi / Hinglish</option>
                   <option value="Punjabi / Hindi">Punjabi / Hindi</option>
                   <option value="English">English</option>
@@ -133,14 +148,14 @@
               </div>
             </div>
             <div>
-              <label class="block text-slate-400 mb-1" for="newChannelNiche">Niche / Main Topic</label>
-              <input id="newChannelNiche" type="text" required placeholder="e.g. AI Tools, Tech Reviews, Fitness, Motivation, GK..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <label class="block text-[#AAAAAA] mb-1" for="newChannelNiche">Niche / Main Topic</label>
+              <input id="newChannelNiche" type="text" required placeholder="e.g. AI Tools, Tech Reviews, Fitness, Motivation, GK..." class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
             </div>
             <div>
-              <label class="block text-slate-400 mb-1" for="newChannelAudience">Target Audience &amp; Content Style</label>
-              <input id="newChannelAudience" type="text" placeholder="e.g. Indian students &amp; young professionals" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <label class="block text-[#AAAAAA] mb-1" for="newChannelAudience">Target Audience &amp; Content Style</label>
+              <input id="newChannelAudience" type="text" placeholder="e.g. Indian students &amp; young professionals" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
             </div>
-            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold text-xs">
               Create Channel &amp; Auto-Generate Weekly Plan
             </button>
           </form>
@@ -157,36 +172,36 @@
     <section id="tab-calendar" class="tab-panel space-y-6">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="glass-card rounded-xl p-4">
-          <p class="text-xs text-slate-400">Weekly Content Pack</p>
+          <p class="text-xs text-[#AAAAAA]">Weekly Content Pack</p>
           <p id="totalItemsCount" class="text-2xl font-bold text-white mt-1">19 Items</p>
-          <p id="totalItemsSub" class="text-xs text-emerald-400 mt-1">14 Shorts · 2 Long · 3 Posts</p>
+          <p id="totalItemsSub" class="text-xs text-[#3EA6FF] mt-1">14 Shorts · 2 Long · 3 Posts</p>
         </div>
         <div class="glass-card rounded-xl p-4">
-          <p class="text-xs text-slate-400">Scripts &amp; SEO Ready</p>
-          <p class="text-2xl font-bold text-emerald-400 mt-1" id="readyCount">19 / 19</p>
-          <p class="text-xs text-slate-400 mt-1">Niche-Matched &amp; Structured</p>
+          <p class="text-xs text-[#AAAAAA]">Scripts &amp; SEO Ready</p>
+          <p class="text-2xl font-bold text-[#3EA6FF] mt-1" id="readyCount">19 / 19</p>
+          <p class="text-xs text-[#AAAAAA] mt-1">Niche-Matched &amp; Structured</p>
         </div>
         <div class="glass-card rounded-xl p-4">
-          <p class="text-xs text-slate-400">Google / YT Status</p>
+          <p class="text-xs text-[#AAAAAA]">Google / YT Status</p>
           <p class="text-2xl font-bold text-amber-400 mt-1" id="uploadedCount">Unverified</p>
-          <p class="text-xs text-slate-400 mt-1">Click Google Login above</p>
+          <p class="text-xs text-[#AAAAAA] mt-1">Click Google Login above</p>
         </div>
         <div class="glass-card rounded-xl p-4">
-          <p class="text-xs text-slate-400">Next Auto-Cycle</p>
+          <p class="text-xs text-[#AAAAAA]">Next Auto-Cycle</p>
           <p class="text-2xl font-bold text-white mt-1">Sat, 28 Nov</p>
-          <p class="text-xs text-emerald-400 mt-1">Every Saturday Automated</p>
+          <p class="text-xs text-[#3EA6FF] mt-1">Every Saturday Automated</p>
         </div>
       </div>
 
       <!-- Filters -->
       <div class="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" data-filter="all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-400 text-slate-950">All</button>
-          <button type="button" data-filter="Short" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Shorts</button>
-          <button type="button" data-filter="Long" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Long Videos</button>
-          <button type="button" data-filter="Community" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Community</button>
+          <button type="button" data-filter="all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3EA6FF] text-slate-950">All</button>
+          <button type="button" data-filter="Short" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#282828] text-[#CCCCCC] hover:bg-slate-700">Shorts</button>
+          <button type="button" data-filter="Long" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#282828] text-[#CCCCCC] hover:bg-slate-700">Long Videos</button>
+          <button type="button" data-filter="Community" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#282828] text-[#CCCCCC] hover:bg-slate-700">Community</button>
         </div>
-        <input id="searchScripts" type="search" placeholder="Search topic or script..." class="w-full sm:w-64 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400" />
+        <input id="searchScripts" type="search" placeholder="Search topic or script..." class="w-full sm:w-64 px-3 py-1.5 rounded-lg bg-[#121212] border border-[#3E3E3E] text-xs text-white focus:outline-none focus:border-[#3EA6FF]" />
       </div>
 
       <!-- Calendar List -->
@@ -201,28 +216,28 @@
             <h2 class="text-lg font-bold text-white">1. Upload Your Photo for AI Host</h2>
             <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Face Lock: ON</span>
           </div>
-          <p class="text-xs text-slate-300">Apni 1 clear front-facing photo upload karein. App aapke facial features ko lock rakhega — har video me sirf <strong>turban aur kapde</strong> change honge.</p>
-          <label class="block border-2 border-dashed border-slate-700 hover:border-emerald-400 rounded-xl p-5 text-center cursor-pointer transition">
+          <p class="text-xs text-[#CCCCCC]">Apni 1 clear front-facing photo upload karein. App aapke facial features ko lock rakhega — har video me sirf <strong>turban aur kapde</strong> change honge.</p>
+          <label class="block border-2 border-dashed border-[#3E3E3E] hover:border-[#3EA6FF] rounded-xl p-5 text-center cursor-pointer transition">
             <input id="hostPhotoInput" type="file" accept="image/*" class="hidden" />
             <div class="flex flex-col items-center gap-2">
-              <i data-lucide="camera" class="w-8 h-8 text-emerald-400"></i>
+              <i data-lucide="camera" class="w-8 h-8 text-[#3EA6FF]"></i>
               <span class="text-sm font-medium text-white">Upload Base Host Photo (JPG / PNG)</span>
-              <span class="text-xs text-slate-400">Saved locally in your phone/browser</span>
+              <span class="text-xs text-[#AAAAAA]">Saved locally in your phone/browser</span>
             </div>
           </label>
-          <div id="hostPreviewImgBox" class="hidden flex items-center gap-4 p-3 rounded-xl bg-slate-900/90 border border-slate-700">
-            <img id="hostPreviewImg" src="" alt="AI Host Preview" class="w-20 h-20 rounded-xl object-cover border-2 border-emerald-400" />
+          <div id="hostPreviewImgBox" class="hidden flex items-center gap-4 p-3 rounded-xl bg-[#121212]/90 border border-[#3E3E3E]">
+            <img id="hostPreviewImg" src="" alt="AI Host Preview" class="w-20 h-20 rounded-xl object-cover border-2 border-[#3EA6FF]" />
             <div class="text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Face Identity Locked!</p>
-              <p class="text-slate-300">Ready for AI Host Video, Lip-Sync &amp; Thumbnail.</p>
+              <p class="font-bold text-[#3EA6FF]">Face Identity Locked!</p>
+              <p class="text-[#CCCCCC]">Ready for AI Host Video, Lip-Sync &amp; Thumbnail.</p>
               <button type="button" id="clearHostBtn" class="text-rose-400 hover:underline">Remove Photo</button>
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
             <div>
-              <label class="block text-slate-400 mb-1" for="turbanSelect">Turban Color &amp; Style</label>
-              <select id="turbanSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <label class="block text-[#AAAAAA] mb-1" for="turbanSelect">Turban Color &amp; Style</label>
+              <select id="turbanSelect" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
                 <option value="Royal Navy Blue Turban">Royal Navy Blue Turban</option>
                 <option value="Deep Maroon Turban">Deep Maroon Turban</option>
                 <option value="Saffron / Kesari Turban">Saffron / Kesari Turban</option>
@@ -232,8 +247,8 @@
               </select>
             </div>
             <div>
-              <label class="block text-slate-400 mb-1" for="outfitSelect">Outfit / Kapde</label>
-              <select id="outfitSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <label class="block text-[#AAAAAA] mb-1" for="outfitSelect">Outfit / Kapde</label>
+              <select id="outfitSelect" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
                 <option value="Charcoal Formal Blazer &amp; White Shirt">Charcoal Blazer &amp; White Shirt</option>
                 <option value="Navy Nehru Jacket over Kurta">Navy Nehru Jacket &amp; Kurta</option>
                 <option value="Midnight Business Suit &amp; Tie">Midnight Business Suit &amp; Tie</option>
@@ -241,18 +256,26 @@
               </select>
             </div>
             <div>
-              <label class="block text-slate-400 mb-1" for="bgSelect">Studio Background</label>
-              <select id="bgSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <label class="block text-[#AAAAAA] mb-1" for="bgSelect">Studio Background</label>
+              <select id="bgSelect" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
                 <option value="Modern Dark Newsroom with Charts">Modern Dark Newsroom</option>
                 <option value="Minimalist Warm Wood &amp; Bookshelf Office">Minimalist Bookshelf Office</option>
                 <option value="Clean Gradient Tech &amp; Creator Studio">Clean Gradient Creator Studio</option>
               </select>
             </div>
             <div>
-              <label class="block text-slate-400 mb-1" for="angleSelect">Camera &amp; Lighting</label>
-              <select id="angleSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <label class="block text-[#AAAAAA] mb-1" for="angleSelect">Camera &amp; Lighting</label>
+              <select id="angleSelect" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
                 <option value="Eye-level medium close-up, soft key light">Eye-level Close-up, Soft Key</option>
                 <option value="Slightly angled 3/4 presenter shot, rim light">3/4 Presenter Shot, Rim Light</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[#AAAAAA] mb-1" for="hostEngineSelect">Free Open-Source AI Host Engine</label>
+              <select id="hostEngineSelect" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
+                <option value="LivePortrait + InstantID (Free Google Colab T4 GPU — Lip-Sync + Turban/Outfit Swap)">LivePortrait + InstantID (Free Colab T4 — Lip-Sync + Turban/Outfit)</option>
+                <option value="SadTalker (Free Open-Source Talking Head)">SadTalker (Free Talking Head)</option>
+                <option value="FFmpeg Fast Host Cutout (Free GitHub Actions CPU)">FFmpeg Fast Host Cutout (GitHub Actions CPU)</option>
               </select>
             </div>
           </div>
@@ -261,14 +284,14 @@
         <div class="glass-card rounded-xl p-5 space-y-4">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-bold text-white">2. Live AI Host Card &amp; Pipeline Config</h2>
-            <button type="button" id="copyHostPromptBtn" class="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+            <button type="button" id="copyHostPromptBtn" class="px-3 py-1.5 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold text-xs">
               Copy Host Config
             </button>
           </div>
-          <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+          <div class="rounded-xl overflow-hidden border border-[#3E3E3E] bg-[#0F0F0F]">
             <canvas id="hostPreviewCanvas" width="800" height="450" class="w-full h-auto block"></canvas>
           </div>
-          <pre id="hostPromptOutput" class="p-3 rounded-xl bg-slate-900 border border-slate-700 whitespace-pre-wrap text-slate-300 font-mono text-[11px] leading-relaxed"></pre>
+          <pre id="hostPromptOutput" class="p-3 rounded-xl bg-[#121212] border border-[#3E3E3E] whitespace-pre-wrap text-[#CCCCCC] font-mono text-[11px] leading-relaxed"></pre>
         </div>
       </div>
     </section>
@@ -278,24 +301,24 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="glass-card rounded-xl p-5 space-y-4">
           <h2 class="text-lg font-bold text-white">1. Record or Upload Your Voice to Clone</h2>
-          <p class="text-xs text-slate-300 leading-relaxed">
+          <p class="text-xs text-[#CCCCCC] leading-relaxed">
             Apni awaaz clone karne ke liye <strong>6–15 second</strong> ka clear sample yahin mic se record karein ya `.wav`/`.mp3` upload karein. App is sample ko 100% free <strong>Coqui XTTS-v2</strong> (commercial YouTube monetization allowed) me use karta hai.
           </p>
 
           <!-- Live Mic Recorder -->
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-3">
+          <div class="p-4 rounded-xl bg-[#121212] border border-[#3E3E3E] space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="text-xs font-bold text-white">Option A: Record Voice Right Here</span>
-              <span id="recTimer" class="text-xs font-mono text-emerald-400">00:00</span>
+              <span id="recTimer" class="text-xs font-mono text-[#3EA6FF]">00:00</span>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button type="button" id="startRecBtn" class="px-3.5 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5">
                 <i data-lucide="mic" class="w-3.5 h-3.5"></i> Start Recording
               </button>
-              <button type="button" id="stopRecBtn" disabled class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs disabled:opacity-50">
+              <button type="button" id="stopRecBtn" disabled class="px-3.5 py-2 rounded-lg bg-[#282828] text-[#AAAAAA] font-bold text-xs disabled:opacity-50">
                 Stop Recording
               </button>
-              <a id="downloadRecLink" href="#" download="my_voice_clone_sample.webm" class="hidden px-3 py-2 rounded-lg bg-emerald-400 text-slate-950 font-bold text-xs">
+              <a id="downloadRecLink" href="#" download="my_voice_clone_sample.webm" class="hidden px-3 py-2 rounded-lg bg-[#3EA6FF] text-slate-950 font-bold text-xs">
                 Save Sample
               </a>
             </div>
@@ -303,40 +326,40 @@
           </div>
 
           <!-- File Upload -->
-          <label class="block border border-dashed border-slate-700 hover:border-emerald-400 rounded-xl p-4 text-center cursor-pointer">
+          <label class="block border border-dashed border-[#3E3E3E] hover:border-[#3EA6FF] rounded-xl p-4 text-center cursor-pointer">
             <input id="voiceSampleInput" type="file" accept="audio/*" class="hidden" />
             <span class="text-xs font-medium text-white block">Option B: Upload Voice Sample (.wav / .mp3)</span>
-            <span id="voiceSampleStatus" class="text-[11px] text-slate-400 mt-1 block">No sample uploaded yet</span>
+            <span id="voiceSampleStatus" class="text-[11px] text-[#AAAAAA] mt-1 block">No sample uploaded yet</span>
           </label>
         </div>
 
         <div class="glass-card rounded-xl p-5 space-y-4">
           <h2 class="text-lg font-bold text-white">2. Free TTS Engine &amp; Live Script Preview</h2>
           <div class="space-y-2 text-xs">
-            <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900 border border-emerald-500/40 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-[#121212] border border-emerald-500/40 cursor-pointer">
               <input type="radio" name="ttsEngine" value="xtts" checked class="mt-1 accent-emerald-400" />
               <div>
                 <p class="font-bold text-white">Coqui XTTS-v2 (Exact Voice Clone — Free Google Colab T4)</p>
-                <p class="text-slate-400">Aapke voice sample se aapki hi awaaz me Hindi/Hinglish voiceover banata hai.</p>
+                <p class="text-[#AAAAAA]">Aapke voice sample se aapki hi awaaz me Hindi/Hinglish voiceover banata hai.</p>
               </div>
             </label>
-            <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-[#121212] border border-[#3E3E3E] cursor-pointer">
               <input type="radio" name="ttsEngine" value="piper" class="mt-1 accent-emerald-400" />
               <div>
                 <p class="font-bold text-white">Piper TTS (<code class="text-emerald-300">hi_IN-pratham-medium</code> — MIT License)</p>
-                <p class="text-slate-400">100% free CPU automation on GitHub Actions &amp; Android Termux.</p>
+                <p class="text-[#AAAAAA]">100% free CPU automation on GitHub Actions &amp; Android Termux.</p>
               </div>
             </label>
           </div>
-          <textarea id="voiceTestText" rows="4" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400">Namaste dosto, S DEEP me aapka swagat hai! 20 November 2026 ko Nifty 50 25,800 ke paar band hua aur FIIs ne ek hi din me 10,308 crore rupaye ki net buying ki.</textarea>
+          <textarea id="voiceTestText" rows="4" class="w-full p-3 rounded-xl bg-[#121212] border border-[#3E3E3E] text-xs text-white focus:outline-none focus:border-[#3EA6FF]">Namaste dosto, S DEEP me aapka swagat hai! 20 November 2026 ko Nifty 50 25,800 ke paar band hua aur FIIs ne ek hi din me 10,308 crore rupaye ki net buying ki.</textarea>
           <div class="flex flex-wrap items-center gap-3">
-            <button type="button" id="speakTestBtn" class="px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs flex items-center gap-1.5">
+            <button type="button" id="speakTestBtn" class="px-4 py-2 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold text-xs flex items-center gap-1.5">
               <i data-lucide="play" class="w-4 h-4"></i> Play Hindi Preview
             </button>
-            <button type="button" id="stopSpeakBtn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs">
+            <button type="button" id="stopSpeakBtn" class="px-4 py-2 rounded-lg bg-[#282828] hover:bg-slate-700 text-white text-xs">
               Stop
             </button>
-            <span id="speakStatus" class="text-xs text-slate-400">Ready</span>
+            <span id="speakStatus" class="text-xs text-[#AAAAAA]">Ready</span>
           </div>
         </div>
       </div>
@@ -347,26 +370,26 @@
       <div class="glass-card rounded-xl p-5 space-y-4 max-w-4xl mx-auto">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-lg font-bold text-white">Auto Thumbnail Designer (1280×720 HD)</h2>
-          <button type="button" id="downloadThumbBtn" class="px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs flex items-center gap-1.5">
+          <button type="button" id="downloadThumbBtn" class="px-4 py-2 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold text-xs flex items-center gap-1.5">
             <i data-lucide="download" class="w-4 h-4"></i> Download PNG
           </button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           <div>
-            <label class="block text-slate-400 mb-1" for="thumbHeadline">Main Headline</label>
-            <input id="thumbHeadline" type="text" value="NIFTY 25,800 PAAR!" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+            <label class="block text-[#AAAAAA] mb-1" for="thumbHeadline">Main Headline</label>
+            <input id="thumbHeadline" type="text" value="NIFTY 25,800 PAAR!" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
           </div>
           <div>
-            <label class="block text-slate-400 mb-1" for="thumbSub">Sub-Headline</label>
-            <input id="thumbSub" type="text" value="FIIs ने झोंके ₹1.06 लाख करोड़" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+            <label class="block text-[#AAAAAA] mb-1" for="thumbSub">Sub-Headline</label>
+            <input id="thumbSub" type="text" value="FIIs ने झोंके ₹1.06 लाख करोड़" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
           </div>
           <div>
-            <label class="block text-slate-400 mb-1" for="thumbBadge">Top Badge</label>
-            <input id="thumbBadge" type="text" value="BANK NIFTY 64,635" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+            <label class="block text-[#AAAAAA] mb-1" for="thumbBadge">Top Badge</label>
+            <input id="thumbBadge" type="text" value="BANK NIFTY 64,635" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
           </div>
           <div>
-            <label class="block text-slate-400 mb-1" for="thumbTheme">Accent Theme</label>
-            <select id="thumbTheme" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+            <label class="block text-[#AAAAAA] mb-1" for="thumbTheme">Accent Theme</label>
+            <select id="thumbTheme" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white">
               <option value="#00D09C">Bullish Emerald</option>
               <option value="#F59E0B">Breaking Gold</option>
               <option value="#EF4444">Alert / Crash Red</option>
@@ -374,7 +397,7 @@
             </select>
           </div>
         </div>
-        <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+        <div class="rounded-xl overflow-hidden border border-[#3E3E3E] bg-[#0F0F0F]">
           <canvas id="thumbCanvas" width="1280" height="720" class="w-full h-auto block"></canvas>
         </div>
       </div>
@@ -382,31 +405,62 @@
 
     <!-- TAB 6: DEDICATED AUTO-UPLOAD PIPELINE -->
     <section id="tab-autoupload" class="tab-panel hidden space-y-6">
+      <div class="glass-card rounded-xl p-5 space-y-4 border border-emerald-500/30">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white">1. One-Click YouTube Upload &amp; Schedule Permission</h2>
+            <p id="ytUploadPermStatus" class="text-xs text-amber-300 mt-0.5">Permission Status: Not Granted Yet — Click button to authorize YouTube upload</p>
+          </div>
+          <button type="button" id="grantYtPermBtn" class="px-4 py-2.5 rounded-full bg-[#FF0000] hover:bg-[#CC0000] text-white hover:bg-slate-100 font-bold text-xs flex items-center gap-2 shadow">
+            <i data-lucide="key-round" class="w-4 h-4 text-emerald-600"></i> Grant YouTube API Permission
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2 border-t border-[#303030]">
+          <div>
+            <label class="block text-[#AAAAAA] mb-1" for="directUploadFile">Select MP4 Video to Schedule</label>
+            <input id="directUploadFile" type="file" accept="video/mp4" class="w-full px-2.5 py-1.5 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
+          </div>
+          <div>
+            <label class="block text-[#AAAAAA] mb-1" for="directUploadTitle">Video Title</label>
+            <input id="directUploadTitle" type="text" placeholder="Nifty 25,800 Paar! #Shorts" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
+          </div>
+          <div>
+            <label class="block text-[#AAAAAA] mb-1" for="directUploadTime">Schedule Date &amp; Time (IST)</label>
+            <div class="flex gap-2">
+              <input id="directUploadTime" type="datetime-local" class="flex-1 px-2.5 py-1.5 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
+              <button type="button" id="directUploadBtn" class="px-3.5 py-1.5 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold whitespace-nowrap">
+                Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="glass-card rounded-xl p-5 space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-lg font-bold text-white">Weekly Auto-Upload Pipeline (GitHub Actions Free Tier)</h2>
-          <button type="button" id="copyWorkflowBtn" class="px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+          <h2 class="text-lg font-bold text-white">2. Weekly Auto-Upload Pipeline (GitHub Actions Free Tier)</h2>
+          <button type="button" id="copyWorkflowBtn" class="px-4 py-2 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold text-xs">
             Copy GitHub Workflow
           </button>
         </div>
-        <p class="text-xs text-slate-300 leading-relaxed">
+        <p class="text-xs text-[#CCCCCC] leading-relaxed">
           Har channel ke niche aur link ke hisaab se yeh <strong>GitHub Actions Free Tier</strong> (2,000 free mins/month) workflow har Saturday subah scripts, Piper/XTTS voice, FFmpeg MP4 aur <strong>YouTube Data API v3 (<code class="text-emerald-300">publishAt</code>)</strong> se weekly schedule upload karta hai.
         </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="font-bold text-emerald-400">Step 1: Google Cloud OAuth</p>
-            <p class="text-slate-400 mt-1">Free YouTube Data API v3 enable karein aur Client ID / Refresh Token GitHub Secrets me save karein.</p>
+          <div class="p-3 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="font-bold text-[#3EA6FF]">Step 1: Google Cloud OAuth</p>
+            <p class="text-[#AAAAAA] mt-1">Free YouTube Data API v3 enable karein aur Client ID / Refresh Token GitHub Secrets me save karein.</p>
           </div>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="font-bold text-emerald-400">Step 2: Face &amp; Voice Asset</p>
-            <p class="text-slate-400 mt-1">Apni 1 base photo (<code class="text-white">host_face.png</code>) aur 10-sec voice sample (<code class="text-white">voice_sample.wav</code>) repo me rakhein.</p>
+          <div class="p-3 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="font-bold text-[#3EA6FF]">Step 2: Face &amp; Voice Asset</p>
+            <p class="text-[#AAAAAA] mt-1">Apni 1 base photo (<code class="text-white">host_face.png</code>) aur 10-sec voice sample (<code class="text-white">voice_sample.wav</code>) repo me rakhein.</p>
           </div>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="font-bold text-emerald-400">Step 3: Saturday Auto-Run</p>
-            <p class="text-slate-400 mt-1">Har Saturday 09:00 IST par 14 Shorts + 2 Long Videos render hokar automatic schedule ho jaate hain.</p>
+          <div class="p-3 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="font-bold text-[#3EA6FF]">Step 3: Saturday Auto-Run</p>
+            <p class="text-[#AAAAAA] mt-1">Har Saturday 09:00 IST par 14 Shorts + 2 Long Videos render hokar automatic schedule ho jaate hain.</p>
           </div>
         </div>
-        <pre id="workflowCode" class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-emerald-300 font-mono overflow-x-auto max-h-80"></pre>
+        <pre id="workflowCode" class="p-4 rounded-xl bg-[#0F0F0F] border border-[#303030] text-[11px] text-emerald-300 font-mono overflow-x-auto max-h-80"></pre>
       </div>
     </section>
 
@@ -419,29 +473,29 @@
             <p id="analyticsModeLabel" class="text-xs text-amber-300">Mode: Pre-Launch / Sample Benchmark (Login with Google or enter API Key for Live Stats)</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <input id="ytApiKeyInput" type="password" placeholder="YouTube Data API v3 Key (Optional)" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white w-56" />
-            <button type="button" id="fetchYtStatsBtn" class="px-3.5 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+            <input id="ytApiKeyInput" type="password" placeholder="YouTube Data API v3 Key (Optional)" class="px-3 py-1.5 rounded-lg bg-[#121212] border border-[#3E3E3E] text-xs text-white w-56" />
+            <button type="button" id="fetchYtStatsBtn" class="px-3.5 py-1.5 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 font-bold text-xs">
               Fetch Live Stats
             </button>
           </div>
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="text-xs text-slate-400">Subscribers</p>
+          <div class="p-4 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="text-xs text-[#AAAAAA]">Subscribers</p>
             <p id="statSubs" class="text-2xl font-bold text-white mt-1">—</p>
           </div>
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="text-xs text-slate-400">Total Channel Views</p>
-            <p id="statViews" class="text-2xl font-bold text-emerald-400 mt-1">—</p>
+          <div class="p-4 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="text-xs text-[#AAAAAA]">Total Channel Views</p>
+            <p id="statViews" class="text-2xl font-bold text-[#3EA6FF] mt-1">—</p>
           </div>
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="text-xs text-slate-400">Published Videos</p>
+          <div class="p-4 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="text-xs text-[#AAAAAA]">Published Videos</p>
             <p id="statVideos" class="text-2xl font-bold text-white mt-1">—</p>
           </div>
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <p class="text-xs text-slate-400">Paid Credits Used</p>
-            <p class="text-2xl font-bold text-emerald-400 mt-1">₹0</p>
+          <div class="p-4 rounded-xl bg-[#121212] border border-[#303030]">
+            <p class="text-xs text-[#AAAAAA]">Paid Credits Used</p>
+            <p class="text-2xl font-bold text-[#3EA6FF] mt-1">₹0</p>
           </div>
         </div>
       </div>
@@ -464,23 +518,23 @@
   </main>
 
   <!-- Google OAuth Verify & Login Modal -->
-  <div id="googleModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="googleModal" class="fixed inset-0 z-50 hidden bg-[#0F0F0F]/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="glass-card rounded-2xl max-w-md w-full p-5 space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div class="flex items-center justify-between border-b border-[#303030] pb-3">
         <h3 class="text-base font-bold text-white">Google Account Verify &amp; YouTube Login</h3>
-        <button type="button" id="closeGoogleModalBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+        <button type="button" id="closeGoogleModalBtn" class="p-1.5 rounded-lg bg-[#282828] hover:bg-slate-700 text-[#CCCCCC]">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <p class="text-xs text-slate-300 leading-relaxed">
+      <p class="text-xs text-[#CCCCCC] leading-relaxed">
         Apne Google Account se YouTube channel verify aur connect karne ke liye apna free <strong>Google Cloud OAuth 2.0 Client ID</strong> daalein (YouTube Data API v3 enabled).
       </p>
       <div class="space-y-2 text-xs">
-        <label class="block text-slate-400" for="googleClientIdInput">Google OAuth Client ID</label>
-        <input id="googleClientIdInput" type="text" placeholder="1234567890-xxxx.apps.googleusercontent.com" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+        <label class="block text-[#AAAAAA]" for="googleClientIdInput">Google OAuth Client ID</label>
+        <input id="googleClientIdInput" type="text" placeholder="1234567890-xxxx.apps.googleusercontent.com" class="w-full px-3 py-2 rounded-lg bg-[#121212] border border-[#3E3E3E] text-white" />
       </div>
       <div id="googleAccountCard" class="hidden p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
-        <p class="font-bold text-emerald-400">Verified &amp; Connected</p>
+        <p class="font-bold text-[#3EA6FF]">Verified &amp; Connected</p>
         <p id="googleVerifiedInfo" class="text-slate-200"></p>
       </div>
       <div class="flex items-center justify-end gap-2">
@@ -492,15 +546,15 @@
   </div>
 
   <!-- Mobile Install Guide Modal -->
-  <div id="installModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="installModal" class="fixed inset-0 z-50 hidden bg-[#0F0F0F]/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="glass-card rounded-2xl max-w-md w-full p-5 space-y-3 text-xs">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+      <div class="flex items-center justify-between border-b border-[#303030] pb-2">
         <h3 class="text-base font-bold text-white">Install on Android / Mobile</h3>
-        <button type="button" id="closeInstallModalBtn" class="p-1 rounded-lg bg-slate-800 text-slate-300">
+        <button type="button" id="closeInstallModalBtn" class="p-1 rounded-lg bg-[#282828] text-[#CCCCCC]">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <p class="text-slate-300 leading-relaxed">Is app ko apne phone me native app ki tarah install karne ke liye:</p>
+      <p class="text-[#CCCCCC] leading-relaxed">Is app ko apne phone me native app ki tarah install karne ke liye:</p>
       <ol class="list-decimal pl-4 space-y-1.5 text-slate-200">
         <li>Is file ko <strong>Chrome (Android)</strong> ya <strong>Safari (iPhone)</strong> me kholein (HTTPS / GitHub Pages link par).</li>
         <li>Chrome me upar right <strong>3 dots (⋮)</strong> par tap karein aur <strong>"Install app"</strong> ya <strong>"Add to Home screen"</strong> chunein.</li>
@@ -510,44 +564,44 @@
   </div>
 
   <!-- Script Detail Modal -->
-  <div id="scriptModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="scriptModal" class="fixed inset-0 z-50 hidden bg-[#0F0F0F]/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="glass-card rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between gap-3">
+      <div class="px-5 py-4 border-b border-[#303030] flex items-center justify-between gap-3">
         <div>
-          <span id="modalBadge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-400 text-slate-950"></span>
+          <span id="modalBadge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-[#3EA6FF] text-slate-950"></span>
           <h3 id="modalTitle" class="text-base font-bold text-white mt-1"></h3>
         </div>
-        <button type="button" id="closeModalBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+        <button type="button" id="closeModalBtn" class="p-1.5 rounded-lg bg-[#282828] hover:bg-slate-700 text-[#CCCCCC]">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
       <div class="p-5 overflow-y-auto space-y-4 text-xs text-slate-200">
         <div>
-          <p class="font-bold text-emerald-400 mb-1">Proposed Slot &amp; Format</p>
-          <p id="modalSlot" class="text-slate-300"></p>
+          <p class="font-bold text-[#3EA6FF] mb-1">Proposed Slot &amp; Format</p>
+          <p id="modalSlot" class="text-[#CCCCCC]"></p>
         </div>
         <div>
-          <p class="font-bold text-emerald-400 mb-1">Voiceover Script</p>
-          <p id="modalScript" class="whitespace-pre-wrap bg-slate-900 p-3 rounded-xl border border-slate-800 leading-relaxed"></p>
+          <p class="font-bold text-[#3EA6FF] mb-1">Voiceover Script</p>
+          <p id="modalScript" class="whitespace-pre-wrap bg-[#121212] p-3 rounded-xl border border-[#303030] leading-relaxed"></p>
         </div>
         <div>
-          <p class="font-bold text-emerald-400 mb-1">Visual Plan &amp; AI Host Cue</p>
-          <p id="modalVisual" class="text-slate-300"></p>
+          <p class="font-bold text-[#3EA6FF] mb-1">Visual Plan &amp; AI Host Cue</p>
+          <p id="modalVisual" class="text-[#CCCCCC]"></p>
         </div>
         <div>
-          <p class="font-bold text-emerald-400 mb-1">SEO Tags &amp; Hashtags</p>
-          <p id="modalSeo" class="text-slate-300 font-mono text-[11px]"></p>
+          <p class="font-bold text-[#3EA6FF] mb-1">SEO Tags &amp; Hashtags</p>
+          <p id="modalSeo" class="text-[#CCCCCC] font-mono text-[11px]"></p>
         </div>
         <div>
-          <p class="font-bold text-emerald-400 mb-1">Source / Channel Reference</p>
+          <p class="font-bold text-[#3EA6FF] mb-1">Source / Channel Reference</p>
           <a id="modalSource" href="#" target="_blank" rel="noopener noreferrer" class="text-sky-400 underline break-all"></a>
         </div>
       </div>
-      <div class="px-5 py-3 border-t border-slate-800 flex items-center justify-end gap-2">
-        <button type="button" id="modalSendToThumbBtn" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">
+      <div class="px-5 py-3 border-t border-[#303030] flex items-center justify-end gap-2">
+        <button type="button" id="modalSendToThumbBtn" class="px-3.5 py-2 rounded-lg bg-[#282828] hover:bg-slate-700 text-white text-xs font-semibold">
           Load into Thumbnail Maker
         </button>
-        <button type="button" id="modalCopyScriptBtn" class="px-3.5 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold">
+        <button type="button" id="modalCopyScriptBtn" class="px-3.5 py-2 rounded-lg bg-[#3EA6FF] hover:bg-[#65B8FF] text-slate-950 text-xs font-bold">
           Copy Script
         </button>
       </div>
@@ -555,7 +609,7 @@
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 rounded-xl bg-emerald-400 text-slate-950 font-bold text-xs shadow-xl"></div>
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 rounded-xl bg-[#3EA6FF] text-slate-950 font-bold text-xs shadow-xl"></div>
 
   <script>
     (function attachPwaManifest() {
@@ -614,6 +668,7 @@
     ];
 
     let activeChannelId = "sdeep";
+    let ytAccessToken = null;
     let currentFilter = "all";
     let searchQuery = "";
     let hostImageObj = null;
@@ -745,12 +800,12 @@ jobs:
 
       const listEl = document.getElementById("channelsListContainer");
       listEl.innerHTML = CHANNELS.map((c) => `
-        <div class="p-3 rounded-xl bg-slate-900 border ${c.id === activeChannelId ? "border-emerald-400" : "border-slate-800"} flex items-center justify-between gap-3">
+        <div class="p-3 rounded-xl bg-[#121212] border ${c.id === activeChannelId ? "border-[#3EA6FF]" : "border-[#303030]"} flex items-center justify-between gap-3">
           <div>
-            <p class="font-bold text-white">${c.name} <span class="text-emerald-400">${c.handle}</span></p>
-            <p class="text-slate-400">${c.niche} · ${c.language}</p>
+            <p class="font-bold text-white">${c.name} <span class="text-[#3EA6FF]">${c.handle}</span></p>
+            <p class="text-[#AAAAAA]">${c.niche} · ${c.language}</p>
           </div>
-          <button type="button" data-switch-ch="${c.id}" class="switch-ch-btn px-3 py-1.5 rounded-lg ${c.id === activeChannelId ? "bg-emerald-400 text-slate-950 font-bold" : "bg-slate-800 text-white"}">
+          <button type="button" data-switch-ch="${c.id}" class="switch-ch-btn px-3 py-1.5 rounded-lg ${c.id === activeChannelId ? "bg-[#3EA6FF] text-slate-950 font-bold" : "bg-[#282828] text-white"}">
             ${c.id === activeChannelId ? "Active" : "Switch"}
           </button>
         </div>
@@ -758,7 +813,84 @@ jobs:
       listEl.querySelectorAll(".switch-ch-btn").forEach((b) => {
         b.addEventListener("click", () => {
           activeChannelId = b.dataset.switchCh;
-          renderChannelSelector();
+      
+    document.getElementById("grantYtPermBtn").addEventListener("click", () => {
+      document.getElementById("googleAuthBtn").click();
+    });
+
+    document.getElementById("directUploadBtn").addEventListener("click", async () => {
+      if (!ytAccessToken) {
+        showToast("Click 'Grant YouTube API Permission' first!");
+        return;
+      }
+      const fileInput = document.getElementById("directUploadFile");
+      const title = document.getElementById("directUploadTitle").value.trim();
+      const dt = document.getElementById("directUploadTime").value;
+      if (!fileInput.files.length || !title || !dt) {
+        showToast("Select MP4, Title & Schedule Time first");
+        return;
+      }
+      const videoFile = fileInput.files[0];
+      const publishAt = new Date(dt).toISOString();
+      const metadata = {
+        snippet: { title: title.slice(0, 100), description: `${title} | ${getActiveChannel().name}`, categoryId: "27" },
+        status: { privacyStatus: "private", publishAt, selfDeclaredMadeForKids: false }
+      };
+      const form = new FormData();
+      form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+      form.append("file", videoFile);
+      try {
+        showToast("Uploading & scheduling to YouTube...");
+        const res = await fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + ytAccessToken },
+          body: form
+        });
+        const data = await res.json();
+        if (data.id) {
+          showToast(`Scheduled on YouTube! ID: ${data.id}`);
+        } else {
+          showToast("Upload failed — check YouTube API quota/permissions");
+        }
+      } catch (err) {
+        showToast("Upload error — check connection");
+      }
+    });
+
+
+    function applyVerifiedSession(session) {
+      if (!session) return;
+      if (session.expiresAt && Date.now() < session.expiresAt) {
+        ytAccessToken = session.token;
+      }
+      const permEl = document.getElementById("ytUploadPermStatus");
+      if (permEl) {
+        permEl.textContent = ytAccessToken
+          ? `Permission Status: Granted (${session.title} — Upload & Schedule Ready)`
+          : `Verified: ${session.title} (Tap Grant Permission to refresh upload token)`;
+        permEl.className = "text-xs text-[#3EA6FF] font-semibold mt-0.5";
+      }
+      document.getElementById("googleAuthLabel").textContent = `Verified: ${session.title}`;
+      document.getElementById("uploadedCount").textContent = "Verified";
+      document.getElementById("uploadedCount").className = "text-2xl font-bold text-[#3EA6FF] mt-1";
+      document.getElementById("statSubs").textContent = Number(session.subs || 0).toLocaleString("en-IN");
+      document.getElementById("statViews").textContent = Number(session.views || 0).toLocaleString("en-IN");
+      document.getElementById("statVideos").textContent = Number(session.videos || 0).toLocaleString("en-IN");
+      document.getElementById("analyticsModeLabel").textContent = `Mode: Google OAuth Verified (${session.title})`;
+      document.getElementById("analyticsModeLabel").className = "text-xs text-[#3EA6FF] font-semibold";
+      document.getElementById("googleAccountCard").classList.remove("hidden");
+      document.getElementById("googleVerifiedInfo").textContent = `${session.title} (${session.id})`;
+    }
+
+    function loadSavedYtSession() {
+      try {
+        const raw = localStorage.getItem("creatorauto_yt_session");
+        if (raw) applyVerifiedSession(JSON.parse(raw));
+      } catch (e) {}
+    }
+
+    renderChannelSelector();
+    loadSavedYtSession();
           showToast(`Switched to ${getActiveChannel().name}`);
         });
       });
@@ -849,16 +981,17 @@ jobs:
                 const data = await res.json();
                 if (data.items && data.items.length > 0) {
                   const mine = data.items[0];
-                  document.getElementById("googleAuthLabel").textContent = `Verified: ${mine.snippet.title}`;
-                  document.getElementById("uploadedCount").textContent = "Verified";
-                  document.getElementById("uploadedCount").className = "text-2xl font-bold text-emerald-400 mt-1";
-                  document.getElementById("statSubs").textContent = Number(mine.statistics.subscriberCount || 0).toLocaleString("en-IN");
-                  document.getElementById("statViews").textContent = Number(mine.statistics.viewCount || 0).toLocaleString("en-IN");
-                  document.getElementById("statVideos").textContent = Number(mine.statistics.videoCount || 0).toLocaleString("en-IN");
-                  document.getElementById("analyticsModeLabel").textContent = `Mode: Google OAuth Verified (${mine.snippet.title})`;
-                  document.getElementById("analyticsModeLabel").className = "text-xs text-emerald-400 font-semibold";
-                  document.getElementById("googleAccountCard").classList.remove("hidden");
-                  document.getElementById("googleVerifiedInfo").textContent = `${mine.snippet.title} (${mine.id})`;
+                  const session = {
+                    token: tokenResp.access_token,
+                    expiresAt: Date.now() + ((tokenResp.expires_in || 3500) * 1000),
+                    title: mine.snippet.title,
+                    id: mine.id,
+                    subs: mine.statistics.subscriberCount || 0,
+                    views: mine.statistics.viewCount || 0,
+                    videos: mine.statistics.videoCount || 0
+                  };
+                  try { localStorage.setItem("creatorauto_yt_session", JSON.stringify(session)); } catch (e) {}
+                  applyVerifiedSession(session);
                   showToast("Google & YouTube verified!");
                 } else {
                   showToast("Logged in, but no YouTube channel found");
@@ -880,10 +1013,10 @@ jobs:
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach((b) => {
           b.classList.remove("active");
-          b.classList.add("text-slate-300");
+          b.classList.add("text-[#CCCCCC]");
         });
         btn.classList.add("active");
-        btn.classList.remove("text-slate-300");
+        btn.classList.remove("text-[#CCCCCC]");
         const target = btn.dataset.tab;
         document.querySelectorAll(".tab-panel").forEach((p) => p.classList.add("hidden"));
         document.getElementById("tab-" + target).classList.remove("hidden");
@@ -904,20 +1037,20 @@ jobs:
       });
 
       grid.innerHTML = filtered.map((item) => {
-        const badgeColor = item.format === "Long" ? "bg-amber-400 text-slate-950" : item.format === "Community" ? "bg-sky-400 text-slate-950" : "bg-emerald-400 text-slate-950";
+        const badgeColor = item.format === "Long" ? "bg-amber-400 text-slate-950" : item.format === "Community" ? "bg-sky-400 text-slate-950" : "bg-[#3EA6FF] text-slate-950";
         return `
-          <div class="glass-card rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-emerald-400/60 transition">
+          <div class="glass-card rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-[#3EA6FF]/60 transition">
             <div>
               <div class="flex items-center justify-between gap-2 mb-2">
                 <span class="text-[11px] font-bold px-2 py-0.5 rounded ${badgeColor}">${item.format}</span>
-                <span class="text-xs text-slate-400">${item.day} · ${item.time}</span>
+                <span class="text-xs text-[#AAAAAA]">${item.day} · ${item.time}</span>
               </div>
               <h3 class="text-sm font-bold text-white leading-snug">${item.title}</h3>
-              <p class="text-xs text-slate-400 mt-2 line-clamp-2">${item.script}</p>
+              <p class="text-xs text-[#AAAAAA] mt-2 line-clamp-2">${item.script}</p>
             </div>
-            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
-              <span class="text-[11px] text-emerald-400 font-medium">Script Ready</span>
-              <button type="button" data-open-id="${item.id}" class="open-item-btn text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">
+            <div class="flex items-center justify-between pt-2 border-t border-[#303030]">
+              <span class="text-[11px] text-[#3EA6FF] font-medium">Script Ready</span>
+              <button type="button" data-open-id="${item.id}" class="open-item-btn text-xs font-semibold text-white bg-[#282828] hover:bg-slate-700 px-3 py-1.5 rounded-lg">
                 View Script &amp; SEO
               </button>
             </div>
@@ -934,11 +1067,11 @@ jobs:
       btn.addEventListener("click", () => {
         currentFilter = btn.dataset.filter;
         document.querySelectorAll(".filter-btn").forEach((b) => {
-          b.classList.remove("bg-emerald-400", "text-slate-950");
-          b.classList.add("bg-slate-800", "text-slate-300");
+          b.classList.remove("bg-[#3EA6FF]", "text-slate-950");
+          b.classList.add("bg-[#282828]", "text-[#CCCCCC]");
         });
-        btn.classList.add("bg-emerald-400", "text-slate-950");
-        btn.classList.remove("bg-slate-800", "text-slate-300");
+        btn.classList.add("bg-[#3EA6FF]", "text-slate-950");
+        btn.classList.remove("bg-[#282828]", "text-[#CCCCCC]");
         renderCalendar();
       });
     });
@@ -1059,12 +1192,13 @@ jobs:
         outfit: document.getElementById("outfitSelect").value,
         background: document.getElementById("bgSelect").value,
         camera_lighting: document.getElementById("angleSelect").value,
+        ai_host_engine: document.getElementById("hostEngineSelect").value,
         channel_branding: `${ch.name} (${ch.handle})`
       };
       document.getElementById("hostPromptOutput").textContent = JSON.stringify(cfg, null, 2);
       drawHostPreview();
     }
-    ["turbanSelect", "outfitSelect", "bgSelect", "angleSelect"].forEach((id) => {
+    ["turbanSelect", "outfitSelect", "bgSelect", "angleSelect", "hostEngineSelect"].forEach((id) => {
       document.getElementById(id).addEventListener("change", updateHostPrompt);
     });
     document.getElementById("copyHostPromptBtn").addEventListener("click", () => {
@@ -1152,7 +1286,7 @@ jobs:
         }, 1000);
         document.getElementById("startRecBtn").disabled = true;
         document.getElementById("stopRecBtn").disabled = false;
-        document.getElementById("stopRecBtn").classList.remove("text-slate-400");
+        document.getElementById("stopRecBtn").classList.remove("text-[#AAAAAA]");
         document.getElementById("stopRecBtn").classList.add("text-white", "bg-emerald-500");
       } catch (err) {
         showToast("Mic permission denied — use Option B Upload");
@@ -1165,7 +1299,7 @@ jobs:
       document.getElementById("startRecBtn").disabled = false;
       document.getElementById("stopRecBtn").disabled = true;
       document.getElementById("stopRecBtn").classList.remove("text-white", "bg-emerald-500");
-      document.getElementById("stopRecBtn").classList.add("text-slate-400");
+      document.getElementById("stopRecBtn").classList.add("text-[#AAAAAA]");
     });
 
     document.getElementById("voiceSampleInput").addEventListener("change", (e) => {
@@ -1321,7 +1455,7 @@ jobs:
           document.getElementById("statViews").textContent = Number(stats.viewCount || 0).toLocaleString("en-IN");
           document.getElementById("statVideos").textContent = Number(stats.videoCount || 0).toLocaleString("en-IN");
           document.getElementById("analyticsModeLabel").textContent = `Mode: Live YouTube Data API v3 Connected (${ch.handle})`;
-          document.getElementById("analyticsModeLabel").className = "text-xs text-emerald-400 font-semibold";
+          document.getElementById("analyticsModeLabel").className = "text-xs text-[#3EA6FF] font-semibold";
           showToast("Live YouTube stats updated!");
         } else {
           showToast("Channel not found or invalid API key");
