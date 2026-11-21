@@ -979,6 +979,10 @@ jobs:
                   headers: { Authorization: "Bearer " + tokenResp.access_token }
                 });
                 const data = await res.json();
+                if (data.error) {
+                  showToast("YT API Error: " + (data.error.message || data.error.code));
+                  return;
+                }
                 if (data.items && data.items.length > 0) {
                   const mine = data.items[0];
                   const session = {
@@ -986,18 +990,19 @@ jobs:
                     expiresAt: Date.now() + ((tokenResp.expires_in || 3500) * 1000),
                     title: mine.snippet.title,
                     id: mine.id,
-                    subs: mine.statistics.subscriberCount || 0,
-                    views: mine.statistics.viewCount || 0,
-                    videos: mine.statistics.videoCount || 0
+                    subs: (mine.statistics && mine.statistics.subscriberCount) || 0,
+                    views: (mine.statistics && mine.statistics.viewCount) || 0,
+                    videos: (mine.statistics && mine.statistics.videoCount) || 0
                   };
                   try { localStorage.setItem("creatorauto_yt_session", JSON.stringify(session)); } catch (e) {}
                   applyVerifiedSession(session);
+                  document.getElementById("googleModal").classList.add("hidden");
                   showToast("Google & YouTube verified!");
                 } else {
-                  showToast("Logged in, but no YouTube channel found");
+                  showToast("Select your S DEEP YouTube account in Google popup");
                 }
               } catch (err) {
-                showToast("Failed to verify channel");
+                showToast("Verify error: " + (err && err.message ? err.message : "Network error"));
               }
             }
           }
