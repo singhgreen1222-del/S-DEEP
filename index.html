@@ -1000,7 +1000,31 @@ jobs:
     document.getElementById("ghRunNowBtn").addEventListener("click", () => callGithubWorkflow("dispatch"));
     document.getElementById("ghSyncPauseBtn").addEventListener("click", () => callGithubWorkflow(autopilotEnabled ? "enable" : "disable"));
 
+
+    async function loadLiveWeeklyReport() {
+      try {
+        const res = await fetch("./weekly_build/status_report.json?t=" + Date.now());
+        if (!res.ok) return;
+        const report = await res.json();
+        if (!Array.isArray(report) || report.length === 0) return;
+        const ch = getActiveChannel();
+        if (ch.id !== "sdeep") return;
+        let uploaded = 0;
+        report.forEach((r) => {
+          const match = ch.items.find((it) => it.title.slice(0, 18) === r.title.slice(0, 18) || it.id === r.id);
+          if (match) {
+            match.liveStatus = r.status;
+            match.youtubeUrl = r.youtube_url || "";
+            if (r.youtube_url) uploaded++;
+          }
+        });
+        document.getElementById("uploadedCount").textContent = `${uploaded} / ${report.length} Uploaded`;
+        renderCalendar();
+      } catch (e) {}
+    }
+
     renderChannelSelector();
+    loadLiveWeeklyReport();
     updateNetworkAndAutopilotUI();
           showToast(`Switched to ${getActiveChannel().name}`);
         });
@@ -1165,7 +1189,7 @@ jobs:
               <p class="text-xs text-[#AAAAAA] mt-2 line-clamp-2">${item.script}</p>
             </div>
             <div class="flex items-center justify-between pt-2 border-t border-[#303030]">
-              <span class="text-[11px] text-[#3EA6FF] font-medium">Script Ready</span>
+              <span class="text-[11px] text-[#3EA6FF] font-medium">${item.liveStatus || "Script Ready"}</span>${item.youtubeUrl ? `<a href="${item.youtubeUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#2BA640] underline ml-2">Watch</a>` : ""}
               <button type="button" data-open-id="${item.id}" class="open-item-btn text-xs font-semibold text-white bg-[#282828] hover:bg-slate-700 px-3 py-1.5 rounded-lg">
                 View Script &amp; SEO
               </button>
