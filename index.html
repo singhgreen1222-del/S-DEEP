@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070D1F" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CreatorAuto AI" />
+  <title>CreatorAuto AI Studio — Dedicated Tabs for Channel, Host, Voice Clone, Thumbnail, Upload &amp; Analytics</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+      background-color: #070D1F;
+      color: #E2E8F0;
+    }
+    .glass-card {
+      background: rgba(17, 28, 58, 0.85);
+      border: 1px solid rgba(51, 65, 85, 0.7);
+      backdrop-filter: blur(10px);
+    }
+    .tab-btn.active {
+      background-color: #00D09C;
+      color: #070D1F;
+      font-weight: 700;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0B132B; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Top Navbar -->
+  <header class="sticky top-0 z-40 border-b border-slate-800 bg-[#0B132B]/95 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div id="channelAvatar" class="w-10 h-10 rounded-xl bg-emerald-400 text-slate-950 font-extrabold flex items-center justify-center text-lg shadow-lg shadow-emerald-500/20">
+          SD
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="channelSelect" aria-label="Select YouTube Channel" class="bg-slate-900 border border-slate-700 text-white text-xs sm:text-sm font-bold rounded-lg px-2.5 py-1 focus:outline-none focus:border-emerald-400"></select>
+          </div>
+          <p id="channelSubtitle" class="text-xs text-slate-400 mt-0.5">Niche: Finance &amp; Share Market · 100% Free Automation</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <button type="button" id="installAppBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold flex items-center gap-1.5 border border-slate-700">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-400"></i> Install App
+        </button>
+        <button type="button" id="googleAuthBtn" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-900 font-bold flex items-center gap-1.5 shadow">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> <span id="googleAuthLabel">Google Verify &amp; Login</span>
+        </button>
+        <span id="hostBadgeTop" class="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium">
+          Host Face: Pending
+        </span>
+      </div>
+    </div>
+
+    <!-- 7 Dedicated Navigation Tabs -->
+    <nav class="max-w-7xl mx-auto px-4 pb-2.5 flex items-center gap-1.5 overflow-x-auto" aria-label="Primary Navigation">
+      <button type="button" data-tab="channels" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="tv" class="w-4 h-4"></i> Channels &amp; Niche
+      </button>
+      <button type="button" data-tab="calendar" class="tab-btn active px-3 py-2 rounded-lg text-xs whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="calendar-days" class="w-4 h-4"></i> Weekly Calendar
+      </button>
+      <button type="button" data-tab="host" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="user-check" class="w-4 h-4"></i> AI Host Photo
+      </button>
+      <button type="button" data-tab="voice" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="mic" class="w-4 h-4"></i> Voice Clone
+      </button>
+      <button type="button" data-tab="thumbnail" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="image" class="w-4 h-4"></i> Thumbnail Maker
+      </button>
+      <button type="button" data-tab="autoupload" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Auto-Upload
+      </button>
+      <button type="button" data-tab="analytics" class="tab-btn px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 whitespace-nowrap flex items-center gap-1.5 transition">
+        <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Analytics
+      </button>
+    </nav>
+  </header>
+
+  <!-- Context Ticker -->
+  <div class="bg-[#0F172A] border-b border-slate-800/80 text-xs py-2 px-4 overflow-x-auto">
+    <div id="channelTicker" class="max-w-7xl mx-auto flex items-center gap-6 whitespace-nowrap text-slate-300">
+      <span class="font-semibold text-emerald-400">As of 20 Nov 2026 (Verified):</span>
+      <span>NIFTY 50: <strong class="text-white">25,800.60</strong> <span class="text-emerald-400">(+1.12%)</span></span>
+      <span>SENSEX: <strong class="text-white">83,919.71</strong> <span class="text-emerald-400">(+898 pts)</span></span>
+      <span>BANK NIFTY: <strong class="text-white">64,635</strong> <span class="text-emerald-400">(Record High)</span></span>
+      <span>FII Net (20 Nov): <strong class="text-emerald-400">+₹10,308.42 Cr</strong></span>
+      <span>RBI Repo: <strong class="text-white">5.50%</strong></span>
+      <span>USD/INR: <strong class="text-white">92.67</strong></span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+    <!-- TAB 1: CHANNELS & NICHE AUTO-GENERATOR -->
+    <section id="tab-channels" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <h2 class="text-lg font-bold text-white">1. Add Any YouTube Channel &amp; Auto-Generate</h2>
+          <p class="text-xs text-slate-300">Sirf apne YouTube channel ka link, language aur niche/topic batayein — app us channel ke liye bhi poora weekly plan, scripts, SEO tags aur GitHub Actions workflow bana dega.</p>
+          <form id="addChannelForm" class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1" for="newChannelUrl">YouTube Channel Link / Handle</label>
+              <input id="newChannelUrl" type="url" required placeholder="https://youtube.com/@yourchannel" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1" for="newChannelName">Channel Name</label>
+                <input id="newChannelName" type="text" required placeholder="e.g. Tech With Deep" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1" for="newChannelLang">Language</label>
+                <select id="newChannelLang" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                  <option value="Hindi / Hinglish">Hindi / Hinglish</option>
+                  <option value="Punjabi / Hindi">Punjabi / Hindi</option>
+                  <option value="English">English</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1" for="newChannelNiche">Niche / Main Topic</label>
+              <input id="newChannelNiche" type="text" required placeholder="e.g. AI Tools, Tech Reviews, Fitness, Motivation, GK..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1" for="newChannelAudience">Target Audience &amp; Content Style</label>
+              <input id="newChannelAudience" type="text" placeholder="e.g. Indian students &amp; young professionals" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+            </div>
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+              Create Channel &amp; Auto-Generate Weekly Plan
+            </button>
+          </form>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <h2 class="text-lg font-bold text-white">2. Your Connected Channels</h2>
+          <div id="channelsListContainer" class="space-y-3 text-xs"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: WEEKLY CALENDAR & SCRIPTS -->
+    <section id="tab-calendar" class="tab-panel space-y-6">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="glass-card rounded-xl p-4">
+          <p class="text-xs text-slate-400">Weekly Content Pack</p>
+          <p id="totalItemsCount" class="text-2xl font-bold text-white mt-1">19 Items</p>
+          <p id="totalItemsSub" class="text-xs text-emerald-400 mt-1">14 Shorts · 2 Long · 3 Posts</p>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <p class="text-xs text-slate-400">Scripts &amp; SEO Ready</p>
+          <p class="text-2xl font-bold text-emerald-400 mt-1" id="readyCount">19 / 19</p>
+          <p class="text-xs text-slate-400 mt-1">Niche-Matched &amp; Structured</p>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <p class="text-xs text-slate-400">Google / YT Status</p>
+          <p class="text-2xl font-bold text-amber-400 mt-1" id="uploadedCount">Unverified</p>
+          <p class="text-xs text-slate-400 mt-1">Click Google Login above</p>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <p class="text-xs text-slate-400">Next Auto-Cycle</p>
+          <p class="text-2xl font-bold text-white mt-1">Sat, 28 Nov</p>
+          <p class="text-xs text-emerald-400 mt-1">Every Saturday Automated</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-filter="all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-400 text-slate-950">All</button>
+          <button type="button" data-filter="Short" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Shorts</button>
+          <button type="button" data-filter="Long" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Long Videos</button>
+          <button type="button" data-filter="Community" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Community</button>
+        </div>
+        <input id="searchScripts" type="search" placeholder="Search topic or script..." class="w-full sm:w-64 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400" />
+      </div>
+
+      <!-- Calendar List -->
+      <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- TAB 3: DEDICATED AI HOST PHOTO & TURBAN STUDIO -->
+    <section id="tab-host" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white">1. Upload Your Photo for AI Host</h2>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Face Lock: ON</span>
+          </div>
+          <p class="text-xs text-slate-300">Apni 1 clear front-facing photo upload karein. App aapke facial features ko lock rakhega — har video me sirf <strong>turban aur kapde</strong> change honge.</p>
+          <label class="block border-2 border-dashed border-slate-700 hover:border-emerald-400 rounded-xl p-5 text-center cursor-pointer transition">
+            <input id="hostPhotoInput" type="file" accept="image/*" class="hidden" />
+            <div class="flex flex-col items-center gap-2">
+              <i data-lucide="camera" class="w-8 h-8 text-emerald-400"></i>
+              <span class="text-sm font-medium text-white">Upload Base Host Photo (JPG / PNG)</span>
+              <span class="text-xs text-slate-400">Saved locally in your phone/browser</span>
+            </div>
+          </label>
+          <div id="hostPreviewImgBox" class="hidden flex items-center gap-4 p-3 rounded-xl bg-slate-900/90 border border-slate-700">
+            <img id="hostPreviewImg" src="" alt="AI Host Preview" class="w-20 h-20 rounded-xl object-cover border-2 border-emerald-400" />
+            <div class="text-xs space-y-1">
+              <p class="font-bold text-emerald-400">Face Identity Locked!</p>
+              <p class="text-slate-300">Ready for AI Host Video, Lip-Sync &amp; Thumbnail.</p>
+              <button type="button" id="clearHostBtn" class="text-rose-400 hover:underline">Remove Photo</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
+            <div>
+              <label class="block text-slate-400 mb-1" for="turbanSelect">Turban Color &amp; Style</label>
+              <select id="turbanSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                <option value="Royal Navy Blue Turban">Royal Navy Blue Turban</option>
+                <option value="Deep Maroon Turban">Deep Maroon Turban</option>
+                <option value="Saffron / Kesari Turban">Saffron / Kesari Turban</option>
+                <option value="Emerald Green Turban">Emerald Green Turban</option>
+                <option value="Crisp White Turban">Crisp White Turban</option>
+                <option value="Jet Black Turban">Jet Black Turban</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1" for="outfitSelect">Outfit / Kapde</label>
+              <select id="outfitSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                <option value="Charcoal Formal Blazer &amp; White Shirt">Charcoal Blazer &amp; White Shirt</option>
+                <option value="Navy Nehru Jacket over Kurta">Navy Nehru Jacket &amp; Kurta</option>
+                <option value="Midnight Business Suit &amp; Tie">Midnight Business Suit &amp; Tie</option>
+                <option value="Smart Casual Olive Sweater">Smart Casual Olive Sweater</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1" for="bgSelect">Studio Background</label>
+              <select id="bgSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                <option value="Modern Dark Newsroom with Charts">Modern Dark Newsroom</option>
+                <option value="Minimalist Warm Wood &amp; Bookshelf Office">Minimalist Bookshelf Office</option>
+                <option value="Clean Gradient Tech &amp; Creator Studio">Clean Gradient Creator Studio</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1" for="angleSelect">Camera &amp; Lighting</label>
+              <select id="angleSelect" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                <option value="Eye-level medium close-up, soft key light">Eye-level Close-up, Soft Key</option>
+                <option value="Slightly angled 3/4 presenter shot, rim light">3/4 Presenter Shot, Rim Light</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white">2. Live AI Host Card &amp; Pipeline Config</h2>
+            <button type="button" id="copyHostPromptBtn" class="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+              Copy Host Config
+            </button>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+            <canvas id="hostPreviewCanvas" width="800" height="450" class="w-full h-auto block"></canvas>
+          </div>
+          <pre id="hostPromptOutput" class="p-3 rounded-xl bg-slate-900 border border-slate-700 whitespace-pre-wrap text-slate-300 font-mono text-[11px] leading-relaxed"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: DEDICATED VOICE CLONE STUDIO -->
+    <section id="tab-voice" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <h2 class="text-lg font-bold text-white">1. Record or Upload Your Voice to Clone</h2>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Apni awaaz clone karne ke liye <strong>6–15 second</strong> ka clear sample yahin mic se record karein ya `.wav`/`.mp3` upload karein. App is sample ko 100% free <strong>Coqui XTTS-v2</strong> (commercial YouTube monetization allowed) me use karta hai.
+          </p>
+
+          <!-- Live Mic Recorder -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-bold text-white">Option A: Record Voice Right Here</span>
+              <span id="recTimer" class="text-xs font-mono text-emerald-400">00:00</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" id="startRecBtn" class="px-3.5 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5">
+                <i data-lucide="mic" class="w-3.5 h-3.5"></i> Start Recording
+              </button>
+              <button type="button" id="stopRecBtn" disabled class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs disabled:opacity-50">
+                Stop Recording
+              </button>
+              <a id="downloadRecLink" href="#" download="my_voice_clone_sample.webm" class="hidden px-3 py-2 rounded-lg bg-emerald-400 text-slate-950 font-bold text-xs">
+                Save Sample
+              </a>
+            </div>
+            <audio id="recordedAudioPlayer" controls class="hidden w-full h-9"></audio>
+          </div>
+
+          <!-- File Upload -->
+          <label class="block border border-dashed border-slate-700 hover:border-emerald-400 rounded-xl p-4 text-center cursor-pointer">
+            <input id="voiceSampleInput" type="file" accept="audio/*" class="hidden" />
+            <span class="text-xs font-medium text-white block">Option B: Upload Voice Sample (.wav / .mp3)</span>
+            <span id="voiceSampleStatus" class="text-[11px] text-slate-400 mt-1 block">No sample uploaded yet</span>
+          </label>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <h2 class="text-lg font-bold text-white">2. Free TTS Engine &amp; Live Script Preview</h2>
+          <div class="space-y-2 text-xs">
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900 border border-emerald-500/40 cursor-pointer">
+              <input type="radio" name="ttsEngine" value="xtts" checked class="mt-1 accent-emerald-400" />
+              <div>
+                <p class="font-bold text-white">Coqui XTTS-v2 (Exact Voice Clone — Free Google Colab T4)</p>
+                <p class="text-slate-400">Aapke voice sample se aapki hi awaaz me Hindi/Hinglish voiceover banata hai.</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+              <input type="radio" name="ttsEngine" value="piper" class="mt-1 accent-emerald-400" />
+              <div>
+                <p class="font-bold text-white">Piper TTS (<code class="text-emerald-300">hi_IN-pratham-medium</code> — MIT License)</p>
+                <p class="text-slate-400">100% free CPU automation on GitHub Actions &amp; Android Termux.</p>
+              </div>
+            </label>
+          </div>
+          <textarea id="voiceTestText" rows="4" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400">Namaste dosto, S DEEP me aapka swagat hai! 20 November 2026 ko Nifty 50 25,800 ke paar band hua aur FIIs ne ek hi din me 10,308 crore rupaye ki net buying ki.</textarea>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="button" id="speakTestBtn" class="px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs flex items-center gap-1.5">
+              <i data-lucide="play" class="w-4 h-4"></i> Play Hindi Preview
+            </button>
+            <button type="button" id="stopSpeakBtn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs">
+              Stop
+            </button>
+            <span id="speakStatus" class="text-xs text-slate-400">Ready</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: DEDICATED THUMBNAIL MAKER -->
+    <section id="tab-thumbnail" class="tab-panel hidden space-y-6">
+      <div class="glass-card rounded-xl p-5 space-y-4 max-w-4xl mx-auto">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-lg font-bold text-white">Auto Thumbnail Designer (1280×720 HD)</h2>
+          <button type="button" id="downloadThumbBtn" class="px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs flex items-center gap-1.5">
+            <i data-lucide="download" class="w-4 h-4"></i> Download PNG
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1" for="thumbHeadline">Main Headline</label>
+            <input id="thumbHeadline" type="text" value="NIFTY 25,800 PAAR!" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1" for="thumbSub">Sub-Headline</label>
+            <input id="thumbSub" type="text" value="FIIs ने झोंके ₹1.06 लाख करोड़" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1" for="thumbBadge">Top Badge</label>
+            <input id="thumbBadge" type="text" value="BANK NIFTY 64,635" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1" for="thumbTheme">Accent Theme</label>
+            <select id="thumbTheme" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <option value="#00D09C">Bullish Emerald</option>
+              <option value="#F59E0B">Breaking Gold</option>
+              <option value="#EF4444">Alert / Crash Red</option>
+              <option value="#38BDF8">Tech / Education Blue</option>
+            </select>
+          </div>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+          <canvas id="thumbCanvas" width="1280" height="720" class="w-full h-auto block"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: DEDICATED AUTO-UPLOAD PIPELINE -->
+    <section id="tab-autoupload" class="tab-panel hidden space-y-6">
+      <div class="glass-card rounded-xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-lg font-bold text-white">Weekly Auto-Upload Pipeline (GitHub Actions Free Tier)</h2>
+          <button type="button" id="copyWorkflowBtn" class="px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+            Copy GitHub Workflow
+          </button>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Har channel ke niche aur link ke hisaab se yeh <strong>GitHub Actions Free Tier</strong> (2,000 free mins/month) workflow har Saturday subah scripts, Piper/XTTS voice, FFmpeg MP4 aur <strong>YouTube Data API v3 (<code class="text-emerald-300">publishAt</code>)</strong> se weekly schedule upload karta hai.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="font-bold text-emerald-400">Step 1: Google Cloud OAuth</p>
+            <p class="text-slate-400 mt-1">Free YouTube Data API v3 enable karein aur Client ID / Refresh Token GitHub Secrets me save karein.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="font-bold text-emerald-400">Step 2: Face &amp; Voice Asset</p>
+            <p class="text-slate-400 mt-1">Apni 1 base photo (<code class="text-white">host_face.png</code>) aur 10-sec voice sample (<code class="text-white">voice_sample.wav</code>) repo me rakhein.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="font-bold text-emerald-400">Step 3: Saturday Auto-Run</p>
+            <p class="text-slate-400 mt-1">Har Saturday 09:00 IST par 14 Shorts + 2 Long Videos render hokar automatic schedule ho jaate hain.</p>
+          </div>
+        </div>
+        <pre id="workflowCode" class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-emerald-300 font-mono overflow-x-auto max-h-80"></pre>
+      </div>
+    </section>
+
+    <!-- TAB 7: DEDICATED ANALYTICS & PERFORMANCE -->
+    <section id="tab-analytics" class="tab-panel hidden space-y-6">
+      <div class="glass-card rounded-xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="analyticsHeader" class="text-lg font-bold text-white">Channel Performance &amp; Analytics (@sdeepworldwide)</h2>
+            <p id="analyticsModeLabel" class="text-xs text-amber-300">Mode: Pre-Launch / Sample Benchmark (Login with Google or enter API Key for Live Stats)</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="ytApiKeyInput" type="password" placeholder="YouTube Data API v3 Key (Optional)" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white w-56" />
+            <button type="button" id="fetchYtStatsBtn" class="px-3.5 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs">
+              Fetch Live Stats
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="text-xs text-slate-400">Subscribers</p>
+            <p id="statSubs" class="text-2xl font-bold text-white mt-1">—</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="text-xs text-slate-400">Total Channel Views</p>
+            <p id="statViews" class="text-2xl font-bold text-emerald-400 mt-1">—</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="text-xs text-slate-400">Published Videos</p>
+            <p id="statVideos" class="text-2xl font-bold text-white mt-1">—</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <p class="text-xs text-slate-400">Paid Credits Used</p>
+            <p class="text-2xl font-bold text-emerald-400 mt-1">₹0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3">Weekly Content Production Target vs Completed</h3>
+          <div class="relative h-72">
+            <canvas id="productionChart"></canvas>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3">Topic Mix Across Active Channel</h3>
+          <div class="relative h-72">
+            <canvas id="topicMixChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Google OAuth Verify & Login Modal -->
+  <div id="googleModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Google Account Verify &amp; YouTube Login</h3>
+        <button type="button" id="closeGoogleModalBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Apne Google Account se YouTube channel verify aur connect karne ke liye apna free <strong>Google Cloud OAuth 2.0 Client ID</strong> daalein (YouTube Data API v3 enabled).
+      </p>
+      <div class="space-y-2 text-xs">
+        <label class="block text-slate-400" for="googleClientIdInput">Google OAuth Client ID</label>
+        <input id="googleClientIdInput" type="text" placeholder="1234567890-xxxx.apps.googleusercontent.com" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+      </div>
+      <div id="googleAccountCard" class="hidden p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
+        <p class="font-bold text-emerald-400">Verified &amp; Connected</p>
+        <p id="googleVerifiedInfo" class="text-slate-200"></p>
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" id="startGoogleOAuthBtn" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs">
+          Continue with Google
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Install Guide Modal -->
+  <div id="installModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-5 space-y-3 text-xs">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-base font-bold text-white">Install on Android / Mobile</h3>
+        <button type="button" id="closeInstallModalBtn" class="p-1 rounded-lg bg-slate-800 text-slate-300">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-slate-300 leading-relaxed">Is app ko apne phone me native app ki tarah install karne ke liye:</p>
+      <ol class="list-decimal pl-4 space-y-1.5 text-slate-200">
+        <li>Is file ko <strong>Chrome (Android)</strong> ya <strong>Safari (iPhone)</strong> me kholein (HTTPS / GitHub Pages link par).</li>
+        <li>Chrome me upar right <strong>3 dots (⋮)</strong> par tap karein aur <strong>"Install app"</strong> ya <strong>"Add to Home screen"</strong> chunein.</li>
+        <li>Phone ke Home Screen par <strong>CreatorAuto AI</strong> app icon ban jaayega!</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Script Detail Modal -->
+  <div id="scriptModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between gap-3">
+        <div>
+          <span id="modalBadge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-400 text-slate-950"></span>
+          <h3 id="modalTitle" class="text-base font-bold text-white mt-1"></h3>
+        </div>
+        <button type="button" id="closeModalBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4 text-xs text-slate-200">
+        <div>
+          <p class="font-bold text-emerald-400 mb-1">Proposed Slot &amp; Format</p>
+          <p id="modalSlot" class="text-slate-300"></p>
+        </div>
+        <div>
+          <p class="font-bold text-emerald-400 mb-1">Voiceover Script</p>
+          <p id="modalScript" class="whitespace-pre-wrap bg-slate-900 p-3 rounded-xl border border-slate-800 leading-relaxed"></p>
+        </div>
+        <div>
+          <p class="font-bold text-emerald-400 mb-1">Visual Plan &amp; AI Host Cue</p>
+          <p id="modalVisual" class="text-slate-300"></p>
+        </div>
+        <div>
+          <p class="font-bold text-emerald-400 mb-1">SEO Tags &amp; Hashtags</p>
+          <p id="modalSeo" class="text-slate-300 font-mono text-[11px]"></p>
+        </div>
+        <div>
+          <p class="font-bold text-emerald-400 mb-1">Source / Channel Reference</p>
+          <a id="modalSource" href="#" target="_blank" rel="noopener noreferrer" class="text-sky-400 underline break-all"></a>
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-slate-800 flex items-center justify-end gap-2">
+        <button type="button" id="modalSendToThumbBtn" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">
+          Load into Thumbnail Maker
+        </button>
+        <button type="button" id="modalCopyScriptBtn" class="px-3.5 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold">
+          Copy Script
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 rounded-xl bg-emerald-400 text-slate-950 font-bold text-xs shadow-xl"></div>
+
+  <script>
+    (function attachPwaManifest() {
+      const svgIcon = "data:image/svg+xml;utf8," + encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#070D1F"/><rect x="16" y="16" width="160" height="160" rx="32" fill="#00D09C"/><text x="96" y="118" font-size="72" font-weight="800" font-family="sans-serif" text-anchor="middle" fill="#070D1F">SD</text></svg>`
+      );
+      const manifest = {
+        name: "CreatorAuto AI Studio",
+        short_name: "CreatorAuto",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#070D1F",
+        theme_color: "#00D09C",
+        icons: [{ src: svgIcon, sizes: "192x192", type: "image/svg+xml" }]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = URL.createObjectURL(blob);
+      document.head.appendChild(link);
+    })();
+
+    const DEFAULT_SDEEP_ITEMS = [
+      { id: 1, day: "Mon, 23 Nov", time: "11:00 AM IST", format: "Short", title: "Nifty 25,800 & Sensex 83,919 — 4-Week Rally Explained", script: "Nifty 50 ne 20 November 2026 ko 25,800.60 par close karke lagatar chauthe hafte tezi dikhayi! Sensex 898 points chadhkar 83,919.71 par band hua. Educational purpose only, not investment advice.", visual: "AI Host + Nifty 50 weekly rally bar chart", seo: "#Nifty50 #Sensex #ShareMarketIndia #SDEEP", source: "https://www.nseindia.com/", badge: "NIFTY 25,800" },
+      { id: 2, day: "Mon, 23 Nov", time: "01:00 PM IST", format: "Community", title: "Poll: Kya Nifty 26,000 paar karega ya consolidation hoga?", script: "20 Nov 2026 ko Nifty 25,800.60 aur Bank Nifty 64,635 (record high) par band hua. Aapka kya view hai? A) 26,000+ Breakout B) Short-term Consolidation C) Waiting for Nov 30 GDP Data.", visual: "Community Poll Card", seo: "#Nifty50 #BankNifty", source: "https://www.kotakneo.com/news/market-news/indian-stock-market-extends-four-week-rally-as-sensex-and-nifty-hit-nine-month-highs-on-record-fii-buying/", badge: "POLL" },
+      { id: 3, day: "Mon, 23 Nov", time: "07:00 PM IST", format: "Short", title: "Mahanadi Coalfields IPO: ₹8,981 Cr OFS — Last Day Alert!", script: "Coal India ki subsidiary Mahanadi Coalfields ka ₹8,981.12 crore ka IPO 23 November 2026 ko band ho raha hai. Price band ₹129 se ₹136 per share hai.", visual: "IPO Key Dates Card + Price Band Graphic", seo: "#MahanadiCoalfieldsIPO #IPOAlert #SEBI #SDEEP", source: "https://www.sebi.gov.in/filings/public-issues/nov-2026/mahanadi-coalfields-limited-rhp_105777.html", badge: "IPO CLOSES TODAY" },
+      { id: 4, day: "Tue, 24 Nov", time: "11:00 AM IST", format: "Short", title: "Bank Nifty Record High 64,635 — Banking Rally ka Raaz", script: "Bank Nifty ne 20 November ko 64,680 ka naya record high banaya aur 64,635 par band hua! HDFC Bank aur ICICI Bank ne November me 21% tak ki rally dikhayi.", visual: "Bank Nifty 64,680 High Chart", seo: "#BankNifty #HDFCBank #ICICIBank #SDEEP", source: "https://blog.liquide.life/share-market-today-nifty-jumps-286-points-to-25-801-sensex-surges-898-points-as-banking-financial-services-and-it-stocks-lead-rally/", badge: "RECORD 64,680" },
+      { id: 5, day: "Tue, 24 Nov", time: "07:00 PM IST", format: "Short", title: "FIIs ne November me Lagaye ₹1.06 Lakh Crore!", script: "Foreign investors ne India me record ₹1.06 trillion (₹1.06 lakh crore se zyada) invest kiye hain! Sirf 20 November ko FIIs ne ₹10,308.42 crore ki net buying ki.", visual: "FII vs DII Flow Chart (20 Nov 2026)", seo: "#FII #DII #StockMarketNews #SDEEP", source: "https://finance.biggo.com/news/78e09a34-caf7-4d32-b9b6-50e4ae43fda8", badge: "FII ₹1.06L CR" },
+      { id: 6, day: "Wed, 25 Nov", time: "11:00 AM IST", format: "Short", title: "Gold & Silver Crash: 24K Sona ₹1.23L, Chandi 6% Giri!", script: "20 November ko MCX par gold aur silver me tez girawat aayi. 24K gold Delhi me ₹1,22,680 per 10g par aaya aur MCX silver 4.6% se 6% tak toot gayi.", visual: "MCX Gold & Silver Fall Chart", seo: "#GoldPriceToday #SilverRate #MCX #SDEEP", source: "https://www.indiainfoline.com/news/gold/gold-and-silver-price-today-november-20-gold-prices-fall-by-2000-per-10-grams", badge: "GOLD-SILVER DIP" },
+      { id: 7, day: "Wed, 25 Nov", time: "01:00 PM IST", format: "Community", title: "FII Buying Data Card: ₹62,158 Cr in 1 Week!", script: "Is hafte (16–20 Nov 2026) FIIs ne ₹62,158.14 Cr ki kharidari ki aur Rupee 1.66% majboot hokar 92.67/USD par aaya.", visual: "FII Weekly Data Graphic", seo: "#FIIBuying #IndianEconomy", source: "https://www.nseindia.in/reports/fii-dii", badge: "DATA CARD" },
+      { id: 8, day: "Wed, 25 Nov", time: "06:00 PM IST", format: "Long", title: "Nifty 25,800 & Bank Nifty 64,635: FIIs ने क्यों झोंके ₹1.06 लाख करोड़? (18–22 Min)", script: "FULL 20-MIN SCRIPT (7 Chapters): Ch1 Hook (0:00) Nifty 25,800.60 & Sensex 83,919.71; Ch2 Data Breakdown (1:30) FII +₹10,308.42 Cr vs DII -₹4,859.80 Cr; Ch3 Global AI Selloff Rotation (4:30); Ch4 Banking & IT Impact (9:00); Ch5 Fact vs Estimate (13:00) Goldman Sachs 28,500 target is estimate, NOT guarantee; Ch6 Risks (17:00); Ch7 Outro & Disclaimer (19:30).", visual: "16:9 Studio + Multi-Chart FII/Global Comparison + AI Host (Royal Navy Turban)", seo: "#Nifty50 #FIIInflow #BankNifty #IndianStockMarket #SDEEP", source: "https://www.kotakneo.com/news/market-news/indian-stock-market-extends-four-week-rally-as-sensex-and-nifty-hit-nine-month-highs-on-record-fii-buying/", badge: "20 MIN DEEP DIVE" },
+      { id: 9, day: "Wed, 25 Nov", time: "07:00 PM IST", format: "Short", title: "Rupee Strengthens to 92.67/USD — RBI Reference Rate Explained", script: "Indian Rupee is hafte 1.66% majboot hokar 92.67 per USD par band hua. RBI ka official reference rate 20 Nov ko 92.9699 raha.", visual: "USD/INR 1-Week Chart", seo: "#USDINR #IndianRupee #RBI #SDEEP", source: "https://www.msei.in/markets/currency/historical-data/rbireferenceratearchives", badge: "RUPEE 92.67" },
+      { id: 10, day: "Thu, 26 Nov", time: "11:00 AM IST", format: "Short", title: "RBI Repo Rate 5.50% — Kya December Me Phir Badhegi EMI?", script: "7 October 2026 ko RBI MPC ne repo rate 25 bps badhakar 5.50% kiya tha. Reuters poll ke economists ka anuman hai ki December me 25 bps aur hike ho sakta hai.", visual: "RBI Repo Rate 5.50% Timeline Graphic", seo: "#RBIRepoRate #HomeLoanEMI #RBI #SDEEP", source: "https://www.rbi.org.in/scripts/BS_PressReleaseDisplay.aspx?prid=63742", badge: "RBI 5.50%" },
+      { id: 11, day: "Thu, 26 Nov", time: "07:00 PM IST", format: "Short", title: "SEBI Ka Naya Rule: Currency Derivatives Limit $100M Se $5M!", script: "SEBI ne 5 November 2026 ke circular me bina underlying exposure ke INR currency derivatives position limit $100M se ghatakar $5M kar di hai.", visual: "SEBI Circular Infographic", seo: "#SEBI #CurrencyDerivatives #TradingRules #SDEEP", source: "https://neurasix.ai/insights/india/capital-market-regulations/sebi-inr-currency-derivatives-underlying-exposure-limit-2026/", badge: "SEBI NEW RULE" },
+      { id: 12, day: "Fri, 27 Nov", time: "11:00 AM IST", format: "Short", title: "30 Nov GDP Data Preview: 7.6% Growth Estimate!", script: "30 November 2026 ko India ke Q2 FY27 GDP numbers aane wale hain. Reuters poll me median anuman 7.6% growth ka hai.", visual: "Q1 7.8% vs Q2 Est 7.6% Comparison Bar", seo: "#IndiaGDP #IndianEconomy #ReutersPoll #SDEEP", source: "https://news.brgbuildingsolutions.com/post/india-s-gdp-growth-expected-to-reach-7-6-in-july-september-2026-reuters-poll-shows", badge: "GDP PREVIEW" },
+      { id: 13, day: "Fri, 27 Nov", time: "06:00 PM IST", format: "Long", title: "RBI Repo Rate 5.50%, Inflation 5.54% & Q2 GDP Preview (18–22 Min)", script: "FULL 20-MIN SCRIPT (7 Chapters): Ch1 Hook (0:00); Ch2 RBI Oct 7 Hike to 5.50% & Sep CPI 5.54% / Food 7.74%; Ch3 Nov 30 Q2 GDP Preview; Ch4 SEBI Nov 5 Circulars; Ch5 Fact vs Estimate; Ch6 Rate-Sensitive Sectors; Ch7 Outro & Disclaimer.", visual: "16:9 Studio + Macro Charts + AI Host (Maroon Turban)", seo: "#RBIPolicy #IndiaGDP #SEBICircular #PersonalFinanceIndia #SDEEP", source: "https://kfgo.com/2026/11/18/indian-economic-growth-seen-at-annual-7-6-in-july-september-quarter-reuters-poll/", badge: "20 MIN MACRO" },
+      { id: 14, day: "Fri, 27 Nov", time: "07:00 PM IST", format: "Short", title: "India Defence Budget $83.72B (+15.2%) & Exports +62.7%!", script: "FY2026–27 me India ka Defence budget $83.72 billion (+15.2% YoY) pahunch gaya hai aur defence exports 62.7% badhe hain.", visual: "Defence Budget & Import Drop Chart", seo: "#DefenceStocks #MakeInIndia #IndianEconomy #SDEEP", source: "https://www.globalxetfs.com/articles/product-research/introducing-shla-investing-in-asias-defense-technology-buildout", badge: "DEFENCE $83.7B" },
+      { id: 15, day: "Sat, 28 Nov", time: "11:00 AM IST", format: "Short", title: "SEBI Accredited Investors Framework Review Explained", script: "SEBI ne 5 November 2026 ko Accredited Investors framework ke review par naya circular jari kiya hai.", visual: "SEBI Circular Summary Card", seo: "#SEBI #AccreditedInvestor #PMS #AIF #SDEEP", source: "https://www.sebi.gov.in/legal/circulars/nov-2026/review-of-the-framework-for-accredited-investors_105618.html", badge: "SEBI UPDATE" },
+      { id: 16, day: "Sat, 28 Nov", time: "07:00 PM IST", format: "Short", title: "Fact vs Estimate: Kya Nifty 28,500 Jaayega? (Risks Explained)", script: "Goldman Sachs ne India ko Overweight upgrade karke 28,500 ka Nifty target diya hai. Par yeh ek estimate hai, guarantee nahi!", visual: "Fact vs Estimate Split Screen", seo: "#NiftyTarget #StockMarketRisks #InvestingIndia #SDEEP", source: "https://finance.biggo.com/news/78e09a34-caf7-4d32-b9b6-50e4ae43fda8", badge: "FACT VS ESTIMATE" },
+      { id: 17, day: "Sun, 29 Nov", time: "11:00 AM IST", format: "Short", title: "Inflation 5.54% & Food Inflation 7.74% — Aapke Paiso Par Asar", script: "September 2026 me CPI inflation 5.54% aur food inflation 7.74% rahi. Mehangai badhne par asset allocation par dhyan dena zaroori hai.", visual: "CPI vs Food Inflation Chart", seo: "#InflationIndia #PersonalFinance #SDEEP", source: "https://en.wikipedia.org/wiki/2026_Iran_war_fuel_crisis", badge: "INFLATION 5.54%" },
+      { id: 18, day: "Sun, 29 Nov", time: "01:00 PM IST", format: "Community", title: "Next Week Watchlist: 30 Nov GDP Data & RBI Policy Cues", script: "Kal Monday 30 Nov ko India ke Q2 FY27 GDP figures release honge! S DEEP par sabse pehle verified analysis milega.", visual: "Next Week Watchlist Banner", seo: "#GDPData #NiftyWatchlist", source: "https://www.nseindia.com/", badge: "WATCHLIST" },
+      { id: 19, day: "Sun, 29 Nov", time: "07:00 PM IST", format: "Short", title: "Weekly Recap & Monday Morning Watchlist (30 Nov GDP)", script: "Is hafte Nifty 25,800.60, Sensex 83,919.71 aur Bank Nifty 64,635 par raha. Kal 30 November ko Q2 GDP data market ki disha tay karega.", visual: "Weekly Summary Card", seo: "#WeeklyMarketWrap #Nifty50 #SDEEP", source: "https://www.nseindia.com/", badge: "WEEKLY WRAP" }
+    ];
+
+    let CHANNELS = [
+      {
+        id: "sdeep",
+        name: "S DEEP",
+        handle: "@sdeepworldwide",
+        url: "https://youtube.com/@sdeepworldwide",
+        niche: "Finance, Share Market & Indian Economy",
+        language: "Hindi / Hinglish",
+        initials: "SD",
+        items: DEFAULT_SDEEP_ITEMS
+      }
+    ];
+
+    let activeChannelId = "sdeep";
+    let currentFilter = "all";
+    let searchQuery = "";
+    let hostImageObj = null;
+    let activeModalItem = null;
+    let deferredInstallPrompt = null;
+    let prodChartInstance = null;
+    let mixChartInstance = null;
+    let mediaRecorder = null;
+    let recChunks = [];
+    let recInterval = null;
+    let recSeconds = 0;
+
+    function getActiveChannel() {
+      return CHANNELS.find((c) => c.id === activeChannelId) || CHANNELS[0];
+    }
+
+    function generateNicheWeeklyItems(name, url, niche, lang) {
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const tag = "#" + niche.replace(/[^a-zA-Z0-9]/g, "") + " #" + name.replace(/[^a-zA-Z0-9]/g, "");
+      const items = [];
+      let id = 1;
+      days.forEach((d, idx) => {
+        items.push({
+          id: id++, day: `${d} (Morning)`, time: "11:00 AM IST", format: "Short",
+          title: `${niche}: Top ${idx + 1} Mistake Beginners Make (${lang})`,
+          script: `Namaste! ${name} par aaj baat karte hain ${niche} ke ek important topic par. Aksar log shuruat me yeh galti karte hain — video ko end tak dekhein aur subscribe karein!`,
+          visual: `9:16 Vertical + AI Host (Locked Face) + Dynamic Captions for ${niche}`,
+          seo: `${tag} #YouTubeShorts`, source: url, badge: `${niche.slice(0, 12).toUpperCase()}`
+        });
+        items.push({
+          id: id++, day: `${d} (Evening)`, time: "07:00 PM IST", format: "Short",
+          title: `${niche} Quick Hack #${idx + 1} — Save Time & Grow`,
+          script: `${niche} me smart results ke liye aaj ka 45-second actionable tip! ${name} ko follow karein daily updates ke liye.`,
+          visual: `9:16 Vertical + Data Card + AI Host`,
+          seo: `${tag} #ShortsIndia`, source: url, badge: "PRO TIP"
+        });
+      });
+      items.push({
+        id: id++, day: "Wed", time: "06:00 PM IST", format: "Long",
+        title: `${niche} Complete Masterclass 2026 — Step-by-Step Guide (18–22 Min)`,
+        script: `Full 20-minute deep dive for ${name}: Chapter 1 Hook (0:00), Chapter 2 Core Fundamentals (2:00), Chapter 3 Real Case Studies (7:00), Chapter 4 Common Pitfalls (13:00), Chapter 5 Action Plan & Outro (18:00).`,
+        visual: `16:9 Studio + B-Roll + AI Host (Turban & Blazer)`, seo: `${tag} #Masterclass`, source: url, badge: "20 MIN GUIDE"
+      });
+      items.push({
+        id: id++, day: "Fri", time: "06:00 PM IST", format: "Long",
+        title: `${niche}: Latest Trends, Tools & Weekly Breakdown (18–22 Min)`,
+        script: `Full 20-minute weekly analysis for ${name}: Latest updates in ${niche}, fact-checked insights, and next-week strategy.`,
+        visual: `16:9 Studio + Infographics + AI Host`, seo: `${tag} #WeeklyAnalysis`, source: url, badge: "WEEKLY DEEP DIVE"
+      });
+      ["Mon", "Wed", "Sun"].forEach((cd, i) => {
+        items.push({
+          id: id++, day: cd, time: "01:00 PM IST", format: "Community",
+          title: `${name} Community Poll #${i + 1}: What ${niche} topic next?`,
+          script: `Aap ${name} par agla detailed video kis ${niche} topic par dekhna chahte hain? Comment me batayein!`,
+          visual: "Community Poll Card", seo: tag, source: url, badge: "POLL"
+        });
+      });
+      return items;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.remove("hidden");
+      setTimeout(() => t.classList.add("hidden"), 2600);
+    }
+
+    function copyText(text, label) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(label + " copied!")).catch(() => fallbackCopy(text, label));
+      } else {
+        fallbackCopy(text, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); showToast(label + " copied!"); } catch (e) { showToast("Copy failed"); }
+      document.body.removeChild(ta);
+    }
+
+    function buildWorkflowYaml(ch) {
+      return `name: ${ch.name} Weekly YouTube Automation
+on:
+  schedule:
+    - cron: '30 3 * * 6' # Every Saturday 09:00 IST (100% Free Tier)
+  workflow_dispatch:
+
+jobs:
+  produce-and-schedule:
+    runs-on: ubuntu-latest
+    env:
+      CHANNEL_URL: "${ch.url}"
+      CHANNEL_NICHE: "${ch.niche}"
+      CHANNEL_LANG: "${ch.language}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Free Tools (Piper TTS + FFmpeg + YT API)
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install piper-tts matplotlib pillow google-api-python-client google-auth-oauthlib
+          python3 -m piper.download_voices hi_IN-pratham-medium
+      - name: Render 14 Shorts & 2 Long Videos
+        run: python3 s_deep_auto_producer.py --channel "${ch.id}" --niche "${ch.niche}"
+      - name: Auto-Upload & Schedule on YouTube
+        env:
+          YT_CLIENT_ID: \${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: \${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: \${{ secrets.YT_REFRESH_TOKEN }}
+        run: python3 youtube_uploader.py --schedule-next-week`;
+    }
+
+    function renderChannelSelector() {
+      const sel = document.getElementById("channelSelect");
+      sel.innerHTML = CHANNELS.map((c) => `<option value="${c.id}" ${c.id === activeChannelId ? "selected" : ""}>${c.name} (${c.handle})</option>`).join("");
+      const ch = getActiveChannel();
+      document.getElementById("channelAvatar").textContent = ch.initials;
+      document.getElementById("channelSubtitle").textContent = `Niche: ${ch.niche} · ${ch.language}`;
+      document.getElementById("analyticsHeader").textContent = `Channel Performance & Analytics (${ch.handle})`;
+      document.getElementById("workflowCode").textContent = buildWorkflowYaml(ch);
+      document.getElementById("totalItemsCount").textContent = `${ch.items.length} Items`;
+      document.getElementById("readyCount").textContent = `${ch.items.length} / ${ch.items.length}`;
+
+      const listEl = document.getElementById("channelsListContainer");
+      listEl.innerHTML = CHANNELS.map((c) => `
+        <div class="p-3 rounded-xl bg-slate-900 border ${c.id === activeChannelId ? "border-emerald-400" : "border-slate-800"} flex items-center justify-between gap-3">
+          <div>
+            <p class="font-bold text-white">${c.name} <span class="text-emerald-400">${c.handle}</span></p>
+            <p class="text-slate-400">${c.niche} · ${c.language}</p>
+          </div>
+          <button type="button" data-switch-ch="${c.id}" class="switch-ch-btn px-3 py-1.5 rounded-lg ${c.id === activeChannelId ? "bg-emerald-400 text-slate-950 font-bold" : "bg-slate-800 text-white"}">
+            ${c.id === activeChannelId ? "Active" : "Switch"}
+          </button>
+        </div>
+      `).join("");
+      listEl.querySelectorAll(".switch-ch-btn").forEach((b) => {
+        b.addEventListener("click", () => {
+          activeChannelId = b.dataset.switchCh;
+          renderChannelSelector();
+          showToast(`Switched to ${getActiveChannel().name}`);
+        });
+      });
+
+      renderCalendar();
+      updateCharts();
+      updateHostPrompt();
+    }
+
+    document.getElementById("channelSelect").addEventListener("change", (e) => {
+      activeChannelId = e.target.value;
+      renderChannelSelector();
+      showToast(`Switched to ${getActiveChannel().name}`);
+    });
+
+    document.getElementById("addChannelForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const url = document.getElementById("newChannelUrl").value.trim();
+      const name = document.getElementById("newChannelName").value.trim();
+      const niche = document.getElementById("newChannelNiche").value.trim();
+      const lang = document.getElementById("newChannelLang").value;
+      const handleMatch = url.match(/@[a-zA-Z0-9._-]+/);
+      const handle = handleMatch ? handleMatch[0] : "@" + name.toLowerCase().replace(/\s+/g, "");
+      const id = "ch_" + Date.now();
+      const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "YT";
+      CHANNELS.push({
+        id, name, handle, url, niche, language: lang, initials,
+        items: generateNicheWeeklyItems(name, url, niche, lang)
+      });
+      activeChannelId = id;
+      try { localStorage.setItem("creatorauto_channels", JSON.stringify(CHANNELS)); } catch (err) {}
+      document.getElementById("addChannelForm").reset();
+      renderChannelSelector();
+      document.querySelector('[data-tab="calendar"]').click();
+      showToast(`${name} added & weekly plan generated!`);
+    });
+
+    // PWA Install Handler
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+    document.getElementById("installAppBtn").addEventListener("click", async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+      } else {
+        document.getElementById("installModal").classList.remove("hidden");
+      }
+    });
+    document.getElementById("closeInstallModalBtn").addEventListener("click", () => {
+      document.getElementById("installModal").classList.add("hidden");
+    });
+
+    // Google Account Verify & Login (OAuth 2.0)
+    document.getElementById("googleAuthBtn").addEventListener("click", () => {
+      try {
+        const savedCid = localStorage.getItem("creatorauto_google_cid");
+        if (savedCid) document.getElementById("googleClientIdInput").value = savedCid;
+      } catch (e) {}
+      document.getElementById("googleModal").classList.remove("hidden");
+    });
+    document.getElementById("closeGoogleModalBtn").addEventListener("click", () => {
+      document.getElementById("googleModal").classList.add("hidden");
+    });
+    document.getElementById("startGoogleOAuthBtn").addEventListener("click", () => {
+      const clientId = document.getElementById("googleClientIdInput").value.trim();
+      if (!clientId) {
+        showToast("Enter your Google OAuth Client ID first");
+        return;
+      }
+      try { localStorage.setItem("creatorauto_google_cid", clientId); } catch (e) {}
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        showToast("Google Identity script loading — try again in 2s");
+        return;
+      }
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: "https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.upload",
+          callback: async (tokenResp) => {
+            if (tokenResp && tokenResp.access_token) {
+              try {
+                const res = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true", {
+                  headers: { Authorization: "Bearer " + tokenResp.access_token }
+                });
+                const data = await res.json();
+                if (data.items && data.items.length > 0) {
+                  const mine = data.items[0];
+                  document.getElementById("googleAuthLabel").textContent = `Verified: ${mine.snippet.title}`;
+                  document.getElementById("uploadedCount").textContent = "Verified";
+                  document.getElementById("uploadedCount").className = "text-2xl font-bold text-emerald-400 mt-1";
+                  document.getElementById("statSubs").textContent = Number(mine.statistics.subscriberCount || 0).toLocaleString("en-IN");
+                  document.getElementById("statViews").textContent = Number(mine.statistics.viewCount || 0).toLocaleString("en-IN");
+                  document.getElementById("statVideos").textContent = Number(mine.statistics.videoCount || 0).toLocaleString("en-IN");
+                  document.getElementById("analyticsModeLabel").textContent = `Mode: Google OAuth Verified (${mine.snippet.title})`;
+                  document.getElementById("analyticsModeLabel").className = "text-xs text-emerald-400 font-semibold";
+                  document.getElementById("googleAccountCard").classList.remove("hidden");
+                  document.getElementById("googleVerifiedInfo").textContent = `${mine.snippet.title} (${mine.id})`;
+                  showToast("Google & YouTube verified!");
+                } else {
+                  showToast("Logged in, but no YouTube channel found");
+                }
+              } catch (err) {
+                showToast("Failed to verify channel");
+              }
+            }
+          }
+        });
+        tokenClient.requestAccessToken();
+      } catch (err) {
+        showToast("OAuth init error — check Client ID");
+      }
+    });
+
+    // Tab switching
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          b.classList.remove("active");
+          b.classList.add("text-slate-300");
+        });
+        btn.classList.add("active");
+        btn.classList.remove("text-slate-300");
+        const target = btn.dataset.tab;
+        document.querySelectorAll(".tab-panel").forEach((p) => p.classList.add("hidden"));
+        document.getElementById("tab-" + target).classList.remove("hidden");
+        if (target === "thumbnail") drawThumbnail();
+        if (target === "host") drawHostPreview();
+      });
+    });
+
+    // Calendar rendering
+    function renderCalendar() {
+      const ch = getActiveChannel();
+      const grid = document.getElementById("calendarGrid");
+      const filtered = ch.items.filter((item) => {
+        const matchType = currentFilter === "all" || item.format === currentFilter;
+        const q = searchQuery.toLowerCase();
+        const matchQ = !q || item.title.toLowerCase().includes(q) || item.script.toLowerCase().includes(q) || item.day.toLowerCase().includes(q);
+        return matchType && matchQ;
+      });
+
+      grid.innerHTML = filtered.map((item) => {
+        const badgeColor = item.format === "Long" ? "bg-amber-400 text-slate-950" : item.format === "Community" ? "bg-sky-400 text-slate-950" : "bg-emerald-400 text-slate-950";
+        return `
+          <div class="glass-card rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-emerald-400/60 transition">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded ${badgeColor}">${item.format}</span>
+                <span class="text-xs text-slate-400">${item.day} · ${item.time}</span>
+              </div>
+              <h3 class="text-sm font-bold text-white leading-snug">${item.title}</h3>
+              <p class="text-xs text-slate-400 mt-2 line-clamp-2">${item.script}</p>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+              <span class="text-[11px] text-emerald-400 font-medium">Script Ready</span>
+              <button type="button" data-open-id="${item.id}" class="open-item-btn text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">
+                View Script &amp; SEO
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      grid.querySelectorAll(".open-item-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openModal(Number(btn.dataset.openId)));
+      });
+    }
+
+    document.querySelectorAll(".filter-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        currentFilter = btn.dataset.filter;
+        document.querySelectorAll(".filter-btn").forEach((b) => {
+          b.classList.remove("bg-emerald-400", "text-slate-950");
+          b.classList.add("bg-slate-800", "text-slate-300");
+        });
+        btn.classList.add("bg-emerald-400", "text-slate-950");
+        btn.classList.remove("bg-slate-800", "text-slate-300");
+        renderCalendar();
+      });
+    });
+
+    document.getElementById("searchScripts").addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderCalendar();
+    });
+
+    function openModal(id) {
+      const ch = getActiveChannel();
+      const item = ch.items.find((x) => x.id === id);
+      if (!item) return;
+      activeModalItem = item;
+      document.getElementById("modalBadge").textContent = item.format;
+      document.getElementById("modalTitle").textContent = item.title;
+      document.getElementById("modalSlot").textContent = `${item.day} at ${item.time} (${ch.name})`;
+      document.getElementById("modalScript").textContent = item.script;
+      document.getElementById("modalVisual").textContent = item.visual;
+      document.getElementById("modalSeo").textContent = item.seo;
+      const srcEl = document.getElementById("modalSource");
+      srcEl.href = item.source;
+      srcEl.textContent = item.source;
+      document.getElementById("scriptModal").classList.remove("hidden");
+    }
+
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      document.getElementById("scriptModal").classList.add("hidden");
+    });
+
+    document.getElementById("modalCopyScriptBtn").addEventListener("click", () => {
+      if (activeModalItem) copyText(activeModalItem.script, "Script");
+    });
+
+    document.getElementById("modalSendToThumbBtn").addEventListener("click", () => {
+      if (!activeModalItem) return;
+      document.getElementById("thumbHeadline").value = activeModalItem.title.slice(0, 32);
+      document.getElementById("thumbBadge").value = activeModalItem.badge || getActiveChannel().name;
+      document.getElementById("scriptModal").classList.add("hidden");
+      document.querySelector('[data-tab="thumbnail"]').click();
+      drawThumbnail();
+      showToast("Loaded into Thumbnail Maker");
+    });
+
+    // AI Host Logic & Live Card Preview
+    function drawHostPreview() {
+      const canvas = document.getElementById("hostPreviewCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const ch = getActiveChannel();
+      const turban = document.getElementById("turbanSelect").value;
+      const outfit = document.getElementById("outfitSelect").value;
+      const bg = document.getElementById("bgSelect").value;
+
+      const grad = ctx.createLinearGradient(0, 0, 800, 450);
+      grad.addColorStop(0, "#0B132B");
+      grad.addColorStop(1, "#1E293B");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 800, 450);
+
+      ctx.fillStyle = "#00D09C";
+      ctx.fillRect(0, 0, 800, 50);
+      ctx.fillStyle = "#070D1F";
+      ctx.font = "bold 22px Inter, sans-serif";
+      ctx.fillText(`AI HOST PREVIEW — ${ch.name} (${ch.handle})`, 24, 33);
+
+      if (hostImageObj) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(170, 245, 115, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        const scale = Math.max(230 / hostImageObj.width, 230 / hostImageObj.height);
+        const dw = hostImageObj.width * scale;
+        const dh = hostImageObj.height * scale;
+        ctx.drawImage(hostImageObj, 170 - dw / 2, 245 - dh / 2, dw, dh);
+        ctx.restore();
+        ctx.strokeStyle = "#00D09C";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(170, 245, 115, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = "#00D09C";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(170, 245, 110, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#94A3B8";
+        ctx.font = "600 18px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Upload Your Photo", 170, 242);
+        ctx.fillText("on the Left", 170, 268);
+        ctx.textAlign = "left";
+      }
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 22px Inter, sans-serif";
+      ctx.fillText("Identity Lock: ACTIVE", 330, 140);
+      ctx.fillStyle = "#00D09C";
+      ctx.font = "600 18px Inter, sans-serif";
+      ctx.fillText("Turban: " + turban, 330, 195);
+      ctx.fillStyle = "#E2E8F0";
+      ctx.fillText("Outfit: " + outfit, 330, 235);
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "500 16px Inter, sans-serif";
+      ctx.fillText("Studio: " + bg, 330, 275);
+      ctx.fillText("Only Turban, Outfit & Lighting Change", 330, 335);
+    }
+
+    function updateHostPrompt() {
+      const ch = getActiveChannel();
+      const cfg = {
+        identity_lock: "STRICT_KEEP_USER_FACIAL_FEATURES_UNCHANGED",
+        turban: document.getElementById("turbanSelect").value,
+        outfit: document.getElementById("outfitSelect").value,
+        background: document.getElementById("bgSelect").value,
+        camera_lighting: document.getElementById("angleSelect").value,
+        channel_branding: `${ch.name} (${ch.handle})`
+      };
+      document.getElementById("hostPromptOutput").textContent = JSON.stringify(cfg, null, 2);
+      drawHostPreview();
+    }
+    ["turbanSelect", "outfitSelect", "bgSelect", "angleSelect"].forEach((id) => {
+      document.getElementById(id).addEventListener("change", updateHostPrompt);
+    });
+    document.getElementById("copyHostPromptBtn").addEventListener("click", () => {
+      copyText(document.getElementById("hostPromptOutput").textContent, "Host Config");
+    });
+
+    function loadSavedHost() {
+      try {
+        const saved = localStorage.getItem("sdeep_host_photo");
+        if (saved) applyHostPhoto(saved);
+      } catch (e) {}
+    }
+
+    function applyHostPhoto(dataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        hostImageObj = img;
+        document.getElementById("hostPreviewImg").src = dataUrl;
+        document.getElementById("hostPreviewImgBox").classList.remove("hidden");
+        const topBadge = document.getElementById("hostBadgeTop");
+        topBadge.textContent = "Host Face: Locked";
+        topBadge.className = "px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-medium";
+        drawThumbnail();
+        drawHostPreview();
+      };
+      img.src = dataUrl;
+    }
+
+    document.getElementById("hostPhotoInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try { localStorage.setItem("sdeep_host_photo", reader.result); } catch (err) {}
+        applyHostPhoto(reader.result);
+        showToast("Host Face Locked!");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("clearHostBtn").addEventListener("click", () => {
+      hostImageObj = null;
+      try { localStorage.removeItem("sdeep_host_photo"); } catch (e) {}
+      document.getElementById("hostPreviewImgBox").classList.add("hidden");
+      const topBadge = document.getElementById("hostBadgeTop");
+      topBadge.textContent = "Host Face: Pending";
+      topBadge.className = "px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium";
+      drawThumbnail();
+      drawHostPreview();
+    });
+
+    // Live Mic Voice Recording for Voice Clone
+    document.getElementById("startRecBtn").addEventListener("click", async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast("Mic recording unsupported — use Option B Upload");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recChunks, { type: "audio/webm" });
+          const url = URL.createObjectURL(blob);
+          const player = document.getElementById("recordedAudioPlayer");
+          player.src = url;
+          player.classList.remove("hidden");
+          const dl = document.getElementById("downloadRecLink");
+          dl.href = url;
+          dl.classList.remove("hidden");
+          document.getElementById("voiceSampleStatus").textContent = `Recorded ${recSeconds}s voice sample — Ready for XTTS-v2`;
+          stream.getTracks().forEach((t) => t.stop());
+          showToast("Voice sample recorded!");
+        };
+        mediaRecorder.start();
+        recSeconds = 0;
+        document.getElementById("recTimer").textContent = "00:00";
+        clearInterval(recInterval);
+        recInterval = setInterval(() => {
+          recSeconds++;
+          const s = String(recSeconds % 60).padStart(2, "0");
+          const m = String(Math.floor(recSeconds / 60)).padStart(2, "0");
+          document.getElementById("recTimer").textContent = `${m}:${s}`;
+        }, 1000);
+        document.getElementById("startRecBtn").disabled = true;
+        document.getElementById("stopRecBtn").disabled = false;
+        document.getElementById("stopRecBtn").classList.remove("text-slate-400");
+        document.getElementById("stopRecBtn").classList.add("text-white", "bg-emerald-500");
+      } catch (err) {
+        showToast("Mic permission denied — use Option B Upload");
+      }
+    });
+
+    document.getElementById("stopRecBtn").addEventListener("click", () => {
+      clearInterval(recInterval);
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      document.getElementById("startRecBtn").disabled = false;
+      document.getElementById("stopRecBtn").disabled = true;
+      document.getElementById("stopRecBtn").classList.remove("text-white", "bg-emerald-500");
+      document.getElementById("stopRecBtn").classList.add("text-slate-400");
+    });
+
+    document.getElementById("voiceSampleInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById("voiceSampleStatus").textContent = `Loaded: ${file.name} (${Math.round(file.size / 1024)} KB) — Ready for XTTS-v2`;
+        showToast("Voice sample attached");
+      }
+    });
+
+    document.getElementById("speakTestBtn").addEventListener("click", () => {
+      if (!("speechSynthesis" in window)) {
+        showToast("Browser speech preview unsupported");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(document.getElementById("voiceTestText").value);
+      utt.lang = "hi-IN";
+      utt.rate = 1.0;
+      document.getElementById("speakStatus").textContent = "Speaking Hindi preview...";
+      utt.onend = () => { document.getElementById("speakStatus").textContent = "Finished"; };
+      window.speechSynthesis.speak(utt);
+    });
+
+    document.getElementById("stopSpeakBtn").addEventListener("click", () => {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      document.getElementById("speakStatus").textContent = "Stopped";
+    });
+
+    // Thumbnail Canvas Generator
+    function drawThumbnail() {
+      const ch = getActiveChannel();
+      const canvas = document.getElementById("thumbCanvas");
+      const ctx = canvas.getContext("2d");
+      const accent = document.getElementById("thumbTheme").value;
+      const headline = document.getElementById("thumbHeadline").value || "NIFTY 25,800 PAAR!";
+      const sub = document.getElementById("thumbSub").value || "FIIs ने झोंके ₹1.06 लाख करोड़";
+      const badge = document.getElementById("thumbBadge").value || ch.name;
+
+      const grad = ctx.createLinearGradient(0, 0, 1280, 720);
+      grad.addColorStop(0, "#070D1F");
+      grad.addColorStop(1, "#132146");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 2;
+      for (let x = 0; x < 1280; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 720); ctx.stroke();
+      }
+      for (let y = 0; y < 720; y += 80) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1280, y); ctx.stroke();
+      }
+
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, 0, 22, 720);
+
+      ctx.fillStyle = accent;
+      ctx.fillRect(70, 65, 420, 62);
+      ctx.fillStyle = "#070D1F";
+      ctx.font = "bold 30px Inter, sans-serif";
+      ctx.fillText(badge.toUpperCase().slice(0, 22), 95, 107);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "800 76px Inter, 'Noto Sans Devanagari', sans-serif";
+      const words = headline.split(" ");
+      let line = "";
+      let y = 240;
+      for (const w of words) {
+        const test = line + w + " ";
+        if (ctx.measureText(test).width > 710 && line !== "") {
+          ctx.fillText(line.trim(), 70, y);
+          line = w + " ";
+          y += 92;
+        } else {
+          line = test;
+        }
+      }
+      ctx.fillText(line.trim(), 70, y);
+
+      ctx.fillStyle = accent;
+      ctx.font = "700 44px Inter, 'Noto Sans Devanagari', sans-serif";
+      ctx.fillText(sub, 70, y + 90);
+
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "600 28px Inter, sans-serif";
+      ctx.fillText(`${ch.name}  |  ${ch.handle}  |  AI STUDIO`, 70, 655);
+
+      if (hostImageObj) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(1020, 360, 210, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        const scale = Math.max(420 / hostImageObj.width, 420 / hostImageObj.height);
+        const dw = hostImageObj.width * scale;
+        const dh = hostImageObj.height * scale;
+        ctx.drawImage(hostImageObj, 1020 - dw / 2, 360 - dh / 2, dw, dh);
+        ctx.restore();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(1020, 360, 210, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([12, 10]);
+        ctx.beginPath();
+        ctx.arc(1020, 360, 190, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#94A3B8";
+        ctx.font = "600 24px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Upload Host Photo", 1020, 355);
+        ctx.fillText("in AI Host Tab", 1020, 390);
+        ctx.textAlign = "left";
+      }
+    }
+
+    ["thumbHeadline", "thumbSub", "thumbBadge", "thumbTheme"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", drawThumbnail);
+    });
+
+    document.getElementById("downloadThumbBtn").addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = `${getActiveChannel().id}_thumbnail_1280x720.png`;
+      link.href = document.getElementById("thumbCanvas").toDataURL("image/png");
+      link.click();
+      showToast("Thumbnail PNG downloaded!");
+    });
+
+    document.getElementById("copyWorkflowBtn").addEventListener("click", () => {
+      copyText(buildWorkflowYaml(getActiveChannel()), "GitHub Actions Workflow");
+    });
+
+    // Analytics & Live YouTube Data API v3 Fetch
+    document.getElementById("fetchYtStatsBtn").addEventListener("click", async () => {
+      const key = document.getElementById("ytApiKeyInput").value.trim();
+      const ch = getActiveChannel();
+      const handleClean = ch.handle.replace(/^@/, "");
+      if (!key) {
+        showToast("Enter your YouTube Data API v3 Key first");
+        return;
+      }
+      try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&forHandle=${encodeURIComponent(handleClean)}&key=${encodeURIComponent(key)}`);
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          const stats = data.items[0].statistics;
+          document.getElementById("statSubs").textContent = Number(stats.subscriberCount || 0).toLocaleString("en-IN");
+          document.getElementById("statViews").textContent = Number(stats.viewCount || 0).toLocaleString("en-IN");
+          document.getElementById("statVideos").textContent = Number(stats.videoCount || 0).toLocaleString("en-IN");
+          document.getElementById("analyticsModeLabel").textContent = `Mode: Live YouTube Data API v3 Connected (${ch.handle})`;
+          document.getElementById("analyticsModeLabel").className = "text-xs text-emerald-400 font-semibold";
+          showToast("Live YouTube stats updated!");
+        } else {
+          showToast("Channel not found or invalid API key");
+        }
+      } catch (err) {
+        showToast("Failed to reach YouTube API");
+      }
+    });
+
+    function updateCharts() {
+      const ch = getActiveChannel();
+      if (prodChartInstance) prodChartInstance.destroy();
+      if (mixChartInstance) mixChartInstance.destroy();
+
+      const shortsCount = ch.items.filter((i) => i.format === "Short").length;
+      const longCount = ch.items.filter((i) => i.format === "Long").length;
+      const commCount = ch.items.filter((i) => i.format === "Community").length;
+
+      prodChartInstance = new Chart(document.getElementById("productionChart"), {
+        type: "bar",
+        data: {
+          labels: ["Shorts Scripts", "Long Scripts", "Community Posts", "Rendered MP4", "YT Uploaded"],
+          datasets: [
+            { label: "Weekly Target", data: [shortsCount, longCount, commCount, shortsCount + longCount, shortsCount + longCount], backgroundColor: "rgba(148,163,184,0.35)", borderRadius: 6 },
+            { label: "Completed Now", data: [shortsCount, longCount, commCount, ch.id === "sdeep" ? 1 : 0, 0], backgroundColor: "#00D09C", borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: "#CBD5E1" } } },
+          scales: {
+            x: { ticks: { color: "#94A3B8" }, grid: { display: false } },
+            y: { ticks: { color: "#94A3B8" }, grid: { color: "rgba(51,65,85,0.4)" } }
+          }
+        }
+      });
+
+      mixChartInstance = new Chart(document.getElementById("topicMixChart"), {
+        type: "doughnut",
+        data: {
+          labels: ["Shorts (9:16)", "Long-form (16:9)", "Community Posts"],
+          datasets: [{
+            data: [shortsCount, longCount, commCount],
+            backgroundColor: ["#00D09C", "#F59E0B", "#38BDF8"],
+            borderColor: "#070D1F",
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { color: "#CBD5E1", padding: 14 } } }
+        }
+      });
+    }
+
+    try {
+      const savedCh = localStorage.getItem("creatorauto_channels");
+      if (savedCh) {
+        const parsed = JSON.parse(savedCh);
+        if (Array.isArray(parsed) && parsed.length > 0) CHANNELS = parsed;
+      }
+    } catch (e) {}
+
+    renderChannelSelector();
+    updateHostPrompt();
+    loadSavedHost();
+    drawThumbnail();
+    drawHostPreview();
+    if (window.lucide) window.lucide.createIcons();
+  </script>
+</body>
+</html>
