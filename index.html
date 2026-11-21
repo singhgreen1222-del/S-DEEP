@@ -858,39 +858,7 @@ jobs:
     });
 
 
-    function applyVerifiedSession(session) {
-      if (!session) return;
-      if (session.expiresAt && Date.now() < session.expiresAt) {
-        ytAccessToken = session.token;
-      }
-      const permEl = document.getElementById("ytUploadPermStatus");
-      if (permEl) {
-        permEl.textContent = ytAccessToken
-          ? `Permission Status: Granted (${session.title} — Upload & Schedule Ready)`
-          : `Verified: ${session.title} (Tap Grant Permission to refresh upload token)`;
-        permEl.className = "text-xs text-[#3EA6FF] font-semibold mt-0.5";
-      }
-      document.getElementById("googleAuthLabel").textContent = `Verified: ${session.title}`;
-      document.getElementById("uploadedCount").textContent = "Verified";
-      document.getElementById("uploadedCount").className = "text-2xl font-bold text-[#3EA6FF] mt-1";
-      document.getElementById("statSubs").textContent = Number(session.subs || 0).toLocaleString("en-IN");
-      document.getElementById("statViews").textContent = Number(session.views || 0).toLocaleString("en-IN");
-      document.getElementById("statVideos").textContent = Number(session.videos || 0).toLocaleString("en-IN");
-      document.getElementById("analyticsModeLabel").textContent = `Mode: Google OAuth Verified (${session.title})`;
-      document.getElementById("analyticsModeLabel").className = "text-xs text-[#3EA6FF] font-semibold";
-      document.getElementById("googleAccountCard").classList.remove("hidden");
-      document.getElementById("googleVerifiedInfo").textContent = `${session.title} (${session.id})`;
-    }
-
-    function loadSavedYtSession() {
-      try {
-        const raw = localStorage.getItem("creatorauto_yt_session");
-        if (raw) applyVerifiedSession(JSON.parse(raw));
-      } catch (e) {}
-    }
-
     renderChannelSelector();
-    loadSavedYtSession();
           showToast(`Switched to ${getActiveChannel().name}`);
         });
       });
@@ -1526,7 +1494,40 @@ jobs:
       }
     } catch (e) {}
 
+
+    function applyVerifiedSession(session) {
+      if (!session) return;
+      if (session.expiresAt && Date.now() < session.expiresAt) {
+        ytAccessToken = session.token;
+      }
+      const permEl = document.getElementById("ytUploadPermStatus");
+      if (permEl) {
+        permEl.textContent = ytAccessToken
+          ? `Permission Status: Granted (${session.title} — Upload & Schedule Ready)`
+          : `Verified: ${session.title} (Tap Grant Permission to refresh upload token)`;
+        permEl.className = "text-xs text-[#3EA6FF] font-semibold mt-0.5";
+      }
+      document.getElementById("googleAuthLabel").textContent = `Verified: ${session.title}`;
+      document.getElementById("uploadedCount").textContent = "Verified";
+      document.getElementById("uploadedCount").className = "text-2xl font-bold text-[#3EA6FF] mt-1";
+      document.getElementById("statSubs").textContent = Number(session.subs || 0).toLocaleString("en-IN");
+      document.getElementById("statViews").textContent = Number(session.views || 0).toLocaleString("en-IN");
+      document.getElementById("statVideos").textContent = Number(session.videos || 0).toLocaleString("en-IN");
+      document.getElementById("analyticsModeLabel").textContent = `Mode: Google OAuth Verified (${session.title})`;
+      document.getElementById("analyticsModeLabel").className = "text-xs text-[#3EA6FF] font-semibold";
+      document.getElementById("googleAccountCard").classList.remove("hidden");
+      document.getElementById("googleVerifiedInfo").textContent = `${session.title} (${session.id})`;
+    }
+
+    function loadSavedYtSession() {
+      try {
+        const raw = localStorage.getItem("creatorauto_yt_session");
+        if (raw) applyVerifiedSession(JSON.parse(raw));
+      } catch (e) {}
+    }
+
     renderChannelSelector();
+    loadSavedYtSession();
     updateHostPrompt();
     loadSavedHost();
     drawThumbnail();
