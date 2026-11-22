@@ -22,7 +22,8 @@ jobs:
     env:
       MODE: ${{ github.event.inputs.mode || (github.event.schedule == '30 4 * * 6' && 'weekly' || 'daily') }}
       ENGINE: piper
-      GEMINI_MODEL: gemini-3.0-flash
+      GEMINI_MODEL: gemini-3.5-flash-lite
+            
             
       MAX_UPLOADS_PER_RUN: "5"
     steps:
