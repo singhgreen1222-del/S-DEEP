@@ -59,13 +59,31 @@ def tts_xtts(text, out_wav, ref):
 
 
 
+def _phonetic_hi(text):
+    subs = {
+        r"\bSEBI\b": "सेबी", r"\bRBI\b": "आरबीआई", r"\bFIIs?\b": "एफआईआई",
+        r"\bDIIs?\b": "डीआईआई", r"\bGDP\b": "जीडीपी", r"\bIPO\b": "आईपीओ",
+        r"\bNSE\b": "एनएसई", r"\bBSE\b": "बीएसई", r"\bEMI\b": "ईएमआई",
+        r"\bKYC\b": "केवाईसी", r"\bMCX\b": "एमसीएक्स", r"\bCR\b": "करोड़",
+    }
+    for pat, rep in subs.items():
+        text = re.sub(pat, rep, text, flags=re.I)
+    return text
+
+
 def tts_piper(text, out_wav, model="hi_IN-pratham-medium"):
-    import subprocess
+    raw_wav = Path(out_wav).with_name(Path(out_wav).stem + "_raw.wav")
+    spoken = _phonetic_hi(text)
     subprocess.run(
-        ["piper", "--model", model, "--output_file", str(out_wav)],
-        input=text.encode("utf-8"),
+        ["piper", "--model", model, "--length_scale", "0.88", "--output_file", str(raw_wav)],
+        input=spoken.encode("utf-8"),
         check=True,
     )
+    run([
+        "ffmpeg", "-y", "-loglevel", "error", "-i", raw_wav,
+        "-af", "highpass=f=85,acompressor=threshold=-18dB:ratio=3:attack=5:release=60:makeup=4,loudnorm=I=-16:TP=-1.5:LRA=11",
+        str(out_wav),
+    ])
 
 def tts_edge(text, out_mp3, voice):
     import edge_tts
@@ -223,7 +241,7 @@ def make_frame(mode, layout, chart_png, host_path, out_png):
 def card_clip(mode, title, sub, base):
     w, h = SIZES[mode]
     img = gradient(w, h); d = ImageDraw.Draw(img)
-    d.text((w // 2, h // 2 - 40), title, font=font(150 if mode == "long" else 130), fill=YELLOW, anchor="mm")
+    d.text((w // 2, h // 2 - 40), title, font=font(115 if mode == "long" else 92), fill=YELLOW, anchor="mm")
     d.text((w // 2, h // 2 + 90), sub, font=font(42 if mode == "long" else 38), fill=(255, 255, 255), anchor="mm")
     png, clip = base.with_suffix(".png"), base.with_suffix(".mp4")
     img.save(png)
@@ -301,6 +319,74 @@ def make_thumb(host_path, text, out_jpg, badge="S DEEP", theme="gold"):
 
 
 # ---------------- captions ----------------
+
+_CONS = {
+    "क":"k","ख":"kh","ग":"g","घ":"gh","ङ":"n","च":"ch","छ":"chh","ज":"j","झ":"jh","ञ":"n",
+    "ट":"t","ठ":"th","ड":"d","ढ":"dh","ण":"n","त":"t","थ":"th","द":"d","ध":"dh","न":"n",
+    "प":"p","फ":"ph","ब":"b","भ":"bh","म":"m","य":"y","र":"r","ल":"l","व":"v",
+    "श":"sh","ष":"sh","स":"s","ह":"h","क़":"q","ख़":"kh","ग़":"gh","ज़":"z","ड़":"r","ढ़":"rh","फ़":"f",
+}
+_VOW_IND = {
+    "अ":"a","आ":"aa","इ":"i","ई":"ee","उ":"u","ऊ":"oo","ऋ":"ri","ए":"e","ऐ":"ai","ओ":"o","औ":"au","अं":"am","अः":"ah",
+}
+_MATRA = {
+    "ा":"a","ि":"i","ी":"ee","ु":"u","ू":"oo","ृ":"ri","े":"e","ै":"ai","ो":"o","ौ":"au","ं":"n","ँ":"n","ः":"h","्":"",
+}
+_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+_HI_POWER = {"SEBI","RBI","NIFTY","SENSEX","BANK","CRORE","LAKH","IPO","GDP","FII","DII","TRAINING","NETWORK","RECORD","ALERT","BREAKING","REPORT","MARKET","PROFIT","LOSS","HIGH","LOW","RATE","EMI","FREE","GOVERNANCE","CORPORATE","INVESTMENT","BADI","KHABAR","SHURU"}
+
+def dev_to_roman(text):
+    text = text.translate(_DIGITS)
+    out = []
+    words = text.split()
+    for w in words:
+        if all(ord(c) < 128 for c in w):
+            out.append(w)
+            continue
+        res, i, n = [], 0, len(w)
+        while i < n:
+            ch = w[i]
+            if ch in _VOW_IND:
+                res.append(_VOW_IND[ch])
+            elif ch in _CONS:
+                c_rom = _CONS[ch]
+                nxt = w[i + 1] if i + 1 < n else ""
+                if nxt == "़" and i + 2 < n:
+                    c_rom = _CONS.get(ch + nxt, c_rom)
+                    i += 1
+                    nxt = w[i + 1] if i + 1 < n else ""
+                if nxt in _MATRA:
+                    res.append(c_rom + _MATRA[nxt])
+                    i += 1
+                elif nxt == "्":
+                    res.append(c_rom)
+                    i += 1
+                else:
+                    res.append(c_rom + ("a" if i + 1 < n and w[i + 1] in _CONS else ""))
+            elif ch in _MATRA:
+                res.append(_MATRA[ch])
+            else:
+                res.append(ch)
+            i += 1
+        out.append("".join(res))
+    return " ".join(out)
+
+def ass_time(t):
+    cs = int(round(t * 100))
+    h, cs = divmod(cs, 360000); m, cs = divmod(cs, 6000); s, cs = divmod(cs, 100)
+    return f"{h}:{m:02}:{s:02}.{cs:02}"
+
+def highlight_ass_line(line):
+    rom = dev_to_roman(line)
+    parts = []
+    for w in rom.split():
+        clean = re.sub(r"[^A-Za-z0-9%₹]", "", w).upper()
+        if clean in _HI_POWER or any(ch.isdigit() for ch in w) or "%" in w or "₹" in w:
+            parts.append(r"{\c&H00D4FF&\b1}" + w.upper() + r"{\c&HFFFFFF&\b1}")
+        else:
+            parts.append(w)
+    return " ".join(parts)
+
 def srt_time(t):
     ms = int(round(t * 1000))
     h, ms = divmod(ms, 3600000); m, ms = divmod(ms, 60000); s, ms = divmod(ms, 1000)
@@ -382,8 +468,10 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             frames[fk] = fp
         total = dur + PAD
         clip = work / f"clip{i}.mp4"
+        n_frames = max(1, int(round(total * int(FPS))))
+        zp = f"scale=iw*1.08:ih*1.08,zoompan=z='min(zoom+0.0005,1.08)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
         run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", FPS, "-i", frames[fk], "-i", audio,
-             "-af", f"apad=pad_dur={PAD}", "-t", f"{total:.3f}", "-c:v", "libx264", "-tune", "stillimage",
+             "-vf", zp, "-af", f"apad=pad_dur={PAD}", "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "fast",
              "-pix_fmt", "yuv420p", "-r", FPS, "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", clip])
         clips.append(clip.name)
         lines = caption_lines(sc["text"], 5 if mode == "short" else 8)
@@ -395,6 +483,25 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
     if intro:
         clips.append(card_clip(mode, "Like | Subscribe", "@sdeepworldwide", work / "outro"))
 
+    ass_lines = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        f"PlayResX: {w}",
+        f"PlayResY: {h}",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+        f"Style: Default,DejaVu Sans,{46 if mode == 'short' else 42},&H00FFFFFF,&H0000D4FF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,4,1,2,40,40,{120 if mode == 'short' else 55},1",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ]
+    for block in srt:
+        parts = block.strip().splitlines()
+        if len(parts) >= 3 and "-->" in parts[1]:
+            st_s, en_s = [x.strip().replace(",", ".") for x in parts[1].split("-->")]
+            st_sec = sum(float(x) * m for x, m in zip(st_s.split(":"), (3600, 60, 1)))
+            en_sec = sum(float(x) * m for x, m in zip(en_s.split(":"), (3600, 60, 1)))
+            ass_lines.append(f"Dialogue: 0,{ass_time(st_sec)},{ass_time(en_sec)},Default,,0,0,0,,{highlight_ass_line(' '.join(parts[2:]))}")
+    (work / "subs.ass").write_text("\n".join(ass_lines), encoding="utf-8")
     (work / "subs.srt").write_text("\n".join(srt), encoding="utf-8")
     (work / "chapters.json").write_text(json.dumps(chapters, ensure_ascii=False), encoding="utf-8")
     (out_dir / f"{slug}.srt").write_text("\n".join(srt), encoding="utf-8")
@@ -402,10 +509,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
     run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy",
          "joined.mp4"], cwd=work)
 
-    size, mv = (13, 12) if mode == "long" else (9, 45)
-    style = (f"FontName=Noto Sans Devanagari,FontSize={size},Bold=1,PrimaryColour=&H00FFFFFF,"
-             f"OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=0,Alignment=2,MarginV={mv}")
-    vf = f"subtitles=subs.srt:force_style='{style}'"
+    vf = "subtitles=subs.ass"
     out = (out_dir / f"{slug}.mp4").resolve()
     enc = ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-r", FPS,
            "-c:a", "aac", "-b:a", "192k"]
