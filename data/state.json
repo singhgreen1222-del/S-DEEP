@@ -259,16 +259,17 @@
    "id": "20261122_short_19",
    "kind": "short",
    "publish_at": "2026-11-22T19:00:00+05:30",
-   "scripted": false,
+   "scripted": true,
    "rendered": false,
    "uploaded": false,
    "scheduled": false,
    "video_id": "",
    "link": "",
    "error": "",
-   "look": "",
-   "title": "",
-   "warnings": []
+   "look": "look_00_original_original.jpg",
+   "title": "RBI Data: फॉरेक्स रिजर्व घटे",
+   "warnings": [],
+   "out": "/home/runner/work/S-DEEP/S-DEEP/work/out/20261122_short_19.mp4"
   },
   "20261122_community_13": {
    "id": "20261122_community_13",
@@ -571,5 +572,7 @@
    "warnings": []
   }
  },
- "recent_looks": []
+ "recent_looks": [
+  "look_00_original_original.jpg"
+ ]
 }
