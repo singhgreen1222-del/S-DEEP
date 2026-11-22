@@ -216,25 +216,77 @@ def paste_fit(img, pic, box, outline=True):
         ImageDraw.Draw(img).rectangle([x - 2, y - 2, x + p.width + 2, y + p.height + 2], outline=YELLOW, width=3)
 
 
-def make_frame(mode, layout, chart_png, host_path, out_png):
-    w, h = SIZES[mode]
-    if layout == "chart_full" or not host_path:
-        img = gradient(w, h)
-        if chart_png:
-            paste_fit(img, Image.open(chart_png).convert("RGB"), full_box(mode))
-        elif not host_path:
-            ImageDraw.Draw(img).text((w // 2, h // 2), "S DEEP", font=font(120), fill=(255, 255, 255), anchor="mm")
-    else:
-        img = cover(load_host(host_path), w, h, cx=0.46 if mode == "short" else 0.5, cy=0.0 if mode == "short" else 0.1)
-        bottom_shade(img)
-        if layout == "host_chart" and chart_png:
-            paste_fit(img, Image.open(chart_png).convert("RGB"), chart_box(mode))
+def _draw_cinematic_bg(w, h, scene_idx=0):
+    accents = [(0, 208, 156), (250, 204, 21), (56, 189, 248), (244, 63, 94)]
+    acc = accents[scene_idx % len(accents)]
+    img = gradient(w, h)
     d = ImageDraw.Draw(img)
-    d.text((34, 26), "S DEEP", font=font(50), fill=YELLOW, stroke_width=3, stroke_fill=(0, 0, 0))
-    if mode == "long":
-        d.text((w - 40, 40), DISCLAIMER, font=font(24), fill=(203, 213, 225), anchor="ra", stroke_width=2, stroke_fill=(0, 0, 0))
+    # Subtle financial grid
+    for x in range(0, w, 90):
+        d.line([(x, 0), (x, h)], fill=(18, 28, 54), width=1)
+    for y in range(0, h, 90):
+        d.line([(0, y), (w, y)], fill=(18, 28, 54), width=1)
+    # Procedural cinematic candlestick silhouettes in background
+    import random
+    rng = random.Random(101 + scene_idx * 17)
+    n_bars = 14 if w < h else 24
+    step = w // (n_bars + 1)
+    base_y = int(h * 0.62)
+    for bi in range(1, n_bars + 1):
+        cx = bi * step
+        bh = rng.randint(60, 220)
+        dy = rng.randint(-120, 120)
+        up = rng.random() > 0.42
+        col = (16, 75, 58) if up else (78, 24, 38)
+        d.line([(cx, base_y + dy - bh // 2 - 40), (cx, base_y + dy + bh // 2 + 40)], fill=col, width=4)
+        d.rectangle([cx - 14, base_y + dy - bh // 2, cx + 14, base_y + dy + bh // 2], fill=col)
+    # Top glow bar
+    d.rectangle([0, 0, w, 10], fill=acc)
+    return img, acc
+
+
+def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_idx=0):
+    w, h = SIZES[mode]
+    img, acc = _draw_cinematic_bg(w, h, scene_idx=scene_idx)
+    d = ImageDraw.Draw(img)
+    if chart_png:
+        paste_fit(img, Image.open(chart_png).convert("RGB"), full_box(mode), outline=True)
     else:
-        d.text((w // 2, h - 40), DISCLAIMER, font=font(26), fill=(203, 213, 225), anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))
+        # Cinematic Visual AI Key-Point Card (faceless B-roll)
+        pad_x = 60 if mode == "short" else 160
+        cy0 = int(h * 0.28) if mode == "short" else int(h * 0.22)
+        cy1 = int(h * 0.68) if mode == "short" else int(h * 0.72)
+        d.rounded_rectangle([pad_x, cy0, w - pad_x, cy1], radius=28, fill=(13, 21, 44), outline=acc, width=4)
+        badge = f"MARKET INSIGHT #{scene_idx + 1}"
+        bf = font(30)
+        bw = d.textlength(badge, font=bf) + 44
+        d.rounded_rectangle([pad_x + 36, cy0 + 36, pad_x + 36 + bw, cy0 + 90], radius=12, fill=acc)
+        d.text((pad_x + 36 + bw / 2, cy0 + 63), badge, font=bf, fill=(10, 14, 28), anchor="mm")
+        rom = dev_to_roman(headline or "S DEEP Finance Analysis").upper()
+        words = rom.split()
+        lines, cur = [], ""
+        max_chars = 18 if mode == "short" else 34
+        for wd in words:
+            if len((cur + " " + wd).strip()) <= max_chars:
+                cur = (cur + " " + wd).strip()
+            else:
+                if cur:
+                    lines.append(cur)
+                cur = wd
+        if cur:
+            lines.append(cur)
+        hf = font(56 if mode == "short" else 62)
+        ty = cy0 + 135
+        for ln in lines[:4]:
+            d.text((pad_x + 40, ty), ln, font=hf, fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
+            ty += 76
+    bottom_shade(img, frac=0.28, maxa=190)
+    d = ImageDraw.Draw(img)
+    d.text((34, 30), "S DEEP", font=font(50), fill=YELLOW, stroke_width=3, stroke_fill=(0, 0, 0))
+    if mode == "long":
+        d.text((w - 40, 44), DISCLAIMER, font=font(24), fill=(203, 213, 225), anchor="ra", stroke_width=2, stroke_fill=(0, 0, 0))
+    else:
+        d.text((w // 2, h - 42), DISCLAIMER, font=font(26), fill=(203, 213, 225), anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))
     img.save(out_png)
 
 
@@ -461,10 +513,10 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             chart_png = charts[key]
             if chart_png is None:
                 layout = "host"
-        fk = (layout, str(chart_png))
+        fk = (i, layout, str(chart_png))
         if fk not in frames:
             fp = work / f"frame{len(frames)}.png"
-            make_frame(mode, layout, chart_png, host, fp)
+            make_frame(mode, layout, chart_png, None, fp, headline=sc["text"][:90], scene_idx=i)
             frames[fk] = fp
         total = dur + PAD
         clip = work / f"clip{i}.mp4"

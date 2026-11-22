@@ -15,7 +15,7 @@
 html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,"Noto Sans Devanagari",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px}
 body{padding-bottom:env(safe-area-inset-bottom)}
 header{position:sticky;top:0;z-index:30;background:#212121;border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 14px 0}
-.hrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-wrap:wrap}
 .logo{width:36px;height:28px;border-radius:8px;background:var(--red);display:grid;place-items:center;font-size:12px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);color:#0F0F0F;font-weight:800;display:grid;place-items:center}
 .ttl{font-weight:800;font-size:15px}.sub{font-size:11px;color:var(--mut)}
@@ -143,10 +143,11 @@ a{color:var(--blue)}
   </section>
 
   <section class="panel" id="p-setup">
-    <div class="card">
+
+        <div class="card">
       <h2>1. Engine se connect karein</h2>
       <p class="small mut">Ye page public hai par isme koi data nahi. Token sirf aapke phone ke browser mein rehta hai aur sirf api.github.com ko jata hai.</p>
-      <label>Engine repo (username/repo)</label><input id="repo" placeholder="singhgreen1222-del/sdeep" autocapitalize="off">
+      <label>Engine repo (username/repo)</label><input id="repo" placeholder="singhgreen1222-del/S-DEEP" autocapitalize="off">
       <label>Branch</label><input id="branch" value="main">
       <label>GitHub token (fine-grained: Contents Read, Actions Read &amp; Write)</label><input id="token" type="password" placeholder="github_pat_..." autocapitalize="off">
       <div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" id="saveCfg">Save &amp; Connect</button><button class="btn" id="clearCfg">Disconnect</button></div>
@@ -158,6 +159,18 @@ a{color:var(--blue)}
         <button class="btn" data-run="dryrun">🧪 Dry-run<br><span class="small mut">1 test Short, upload nahi</span></button>
         <button class="btn" data-run="daily">🎬 Daily<br><span class="small mut">agle 48 ghante</span></button>
         <button class="btn" data-run="weekly">🧠 Weekly<br><span class="small mut">analytics + plan</span></button>
+      </div>
+      <div id="dryrunPreviewBox" style="margin:14px 0;padding:14px;border-radius:12px;background:#141414;border:1px solid #303030;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+          <strong style="font-size:13px;color:#fff;">Latest 1080p Video, Thumbnail, SEO &amp; Script</strong>
+          <button type="button" id="playPreviewBtn"
+             style="padding:9px 16px;border-radius:999px;background:#FF0000;color:#fff;font-weight:700;font-size:12px;border:none;cursor:pointer;">
+            ▶ Play 1080p Video (New Tab)
+          </button>
+        </div>
+        <div id="dryrunMeta" style="font-size:12px;color:#ccc;line-height:1.5;">
+          Dry-run chalane ke baad yahan Thumbnail, SEO Title, Tags aur poori Script dikhegi.
+        </div>
       </div>
       <h3>Recent runs</h3><div id="runs" class="small mut">—</div>
     </div>
@@ -373,7 +386,7 @@ function initThumb(){$("#thTheme").innerHTML=Object.keys(THEMES).map(k=>`<button
 function renderRuns(){const el=$("#runs");if(!D.runs){el.textContent=connected()?"Abhi koi run nahi.":"Connect karein.";return}
   el.innerHTML=D.runs.map(r=>{const ic=r.status!=="completed"?"⏳":r.conclusion==="success"?"✅":"❌";return`<div style="margin:6px 0">${ic} <a href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.event==="schedule"?"scheduled":"manual")} · ${esc(r.display_title||r.name)}</a> <span class="mut">· ${ago(r.created_at)}</span></div>`}).join("")||"—"}
 async function runMode(mode){if(!connected())return toast("Pehle connect karein");
-  if(!confirm(mode==="daily"?"Daily run: agle 48 ghante ke videos banakar YouTube par private+schedule upload honge. Chalayein?":"Run '"+mode+"' chalayein?"))return;
+  toast("Starting " + mode + "…");
   try{await gh(`/repos/${cfg.repo}/actions/workflows/weekly.yml/dispatches`,{method:"POST",body:JSON.stringify({ref:cfg.branch,inputs:{mode}})});toast("Start ho gaya ✔ (5-30 min)");setTimeout(loadAll,6000)}
   catch(e){toast("Fail: "+e.message+(e.status===404?" (weekly.yml path/branch check karein)":e.status===403?" (token mein Actions: write chahiye)":""))}}
 function initSetup(){$("#repo").value=cfg.repo;$("#branch").value=cfg.branch;$("#token").value=cfg.token;
@@ -395,5 +408,33 @@ $("#installBtn").onclick=async()=>{if(deferred){deferred.prompt();deferred=null;
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 buildSwatches();initThumb();initSetup();loadAll();
 </script>
+
+<script>
+(function(){
+  const btn = document.getElementById("playPreviewBtn");
+  if (btn) {
+    btn.addEventListener("click", function() {
+      window.open("data/dryrun_preview.mp4", "_blank", "noopener");
+    });
+  }
+  fetch("data/dryrun_preview.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(d => {
+    if (!d) return;
+    const box = document.getElementById("dryrunMeta");
+    const tags = (d.tags || []).join(", ");
+    const hash = (d.hashtags || []).join(" ");
+    const scriptTxt = (d.scenes || []).map(sc => sc.text || "").join(" ");
+    box.innerHTML = `
+      <div style="margin-bottom:8px;"><img src="data/dryrun_preview.jpg" alt="Thumbnail" style="max-width:320px;width:100%;border-radius:8px;border:1px solid #333;" onerror="this.style.display='none'"></div>
+      <div><strong>Title:</strong> ${d.title || ""}</div>
+      <div style="color:#3EA6FF;margin-top:4px;"><strong>Tags:</strong> ${tags}</div>
+      <div style="color:#aaa;margin-top:2px;"><strong>Hashtags:</strong> ${hash}</div>
+      <div style="margin-top:8px;padding:8px;background:#0f0f0f;border-radius:8px;color:#e5e5e5;"><strong>Script:</strong> ${scriptTxt}</div>
+    `;
+  }).catch(() => {});
+})();
+</script>
+
+
+
 </body>
 </html>
