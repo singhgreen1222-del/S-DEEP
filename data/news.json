@@ -1,5 +1,5 @@
 {
- "fetched_at": "2026-11-22T16:38:15.753254+05:30",
+ "fetched_at": "2026-11-22T16:55:27.014795+05:30",
  "items": [
   {
    "source": "Google News: RBI SEBI",
@@ -139,6 +139,14 @@
   },
   {
    "source": "Google News: Nifty Sensex",
+   "title": "Nifty, Sensex extend gains for 4th week amid strong foreign inflows - tennews.in",
+   "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNRHk4eVFneDJCa2FoeHNhUUxsNVFsbDh3OUd3aDFVZzZTaTMxU2ZBczhzUGkzZWh3R2Q3V29oV2dHaW12bHRjWFRWLVhPVS0zV3lWZTlmckt0UWtLSDFSbDBSdHRYS2J1SEZQZFc3NTJ3c3pJOUdKNmlDVGZEQ3Q0Qk4zeFJxM1hnTjk0ZjBmMA?oc=5",
+   "ts": 1795245420,
+   "published": "Sat, 21 Nov 2026 07:17:00 GMT",
+   "summary": "Nifty, Sensex extend gains for 4th week amid strong foreign inflows &nbsp;&nbsp; tennews.in"
+  },
+  {
+   "source": "Google News: Nifty Sensex",
    "title": "Nifty Hits Nine-Month High of 25,800 as Record FII Buying Lifts Sensex 2,327 Points - HDFC Sky",
    "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOUGFSMWJoeDJNTElSVk5neHlWQk40YTQ2UmhMM3BkMUZOZjRCYlB1ekdMTk54QXdJNlFDWmRubHN5ZjJBQ3BveDRBRHNud1E4OVZvZmh5TWVlcU9jUVVoQ0gya3VqckR3Zkg0Qkl3WkwwUFNRWm94UWdtZEVBN3ZUZ0Z0VlpLZGFCbWZSd1EwODVZNGpJOE5oNnRyMmRfTmdDZ0ZQMUJ5cmd4dw?oc=5",
    "ts": 1795241213,
@@ -187,6 +195,14 @@
   },
   {
    "source": "Google News: Reuters India",
+   "title": "The snowballing selloff in global markets - Reuters",
+   "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE84ZFFzbDlRd0J6aHAxMkFGQUl6R2swRWt1ZTFUNWhNZlB1Q3VTMFlIcWNUUWpvZGY4TjdodG9qYkw5eVZiaENISVhjZlVQNy1RRjZ2QktKOER1d3lNOUxyOTc3aThONVdUU3VmX19fMnl2ZmpZeG1idEFGR1BkMlk?oc=5",
+   "ts": 1795187624,
+   "published": "Fri, 20 Nov 2026 15:13:44 GMT",
+   "summary": "The snowballing selloff in global markets &nbsp;&nbsp; Reuters"
+  },
+  {
+   "source": "Google News: Reuters India",
    "title": "India proposes limiting tenure of chief executives, independent directors at exchanges - Reuters",
    "link": "https://news.google.com/rss/articles/CBMizAFBVV95cUxNUkZ5UmxQbnZLVk0xQW9OamJ0azVwTHhZOVZQb0lLX19YcGdIdHA4cDBLRVRtdjM1VEM4Vkgxbi1KSjMxNm5BNTB5bE5fZ3lES1V6cE9PT3h5ZlYzOFc2blBrQzE0d193ekYwTGNkR0x4VmdKM1NzblVqM1lESDM4NXNCM2FuZUJoV0ZCVlY3bVlaeGg5YmpCdVEyUlV6bnlYSWgyVTVMOUMxMk9TUjlYZjZHWUNQbUpRaWY3Wlk5NzRKUXJValNyU0tPSkk?oc=5",
    "ts": 1795186093,
@@ -218,28 +234,12 @@
    "summary": "India's forex reserves fall to over three month low of $705 billion &nbsp;&nbsp; Reuters"
   },
   {
-   "source": "Google News: Nifty Sensex",
-   "title": "Sensex Jumps 898 Points, Nifty Reclaims 25,800; Banking Stocks Lead Rally - India Infoline",
-   "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxPaG5JZ2lId2FfTWZkMENtNXdid1BLVnhTcE9CRGR1QjFMT2UwSk5WVC04UGpOa0ZPQWFDTHVNZmh5NnJMV016VEdjZHhkemx2aHAwRldGdzdsN0VKV0VVU3dSTHBWTjkyMEVnZUJSS1VyU25OVW1tT0hqNjVJSkpFZzljbGU0TV9SZFpSUkNocHBJcmhnbm1ZV1QtYi1nTTh3MlZ5aEhPWm5ZV3o1b256bEJkcw?oc=5",
-   "ts": 1795173088,
-   "published": "Fri, 20 Nov 2026 11:11:28 GMT",
-   "summary": "Sensex Jumps 898 Points, Nifty Reclaims 25,800; Banking Stocks Lead Rally &nbsp;&nbsp; India Infoline"
-  },
-  {
    "source": "Google News: RBI SEBI",
    "title": "India's RBI expected to raise rates in December, deliver final hike in February - Reuters",
    "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPc0htMDdyM3NhYkRZMHFIU3V0VUhoNWs4ekl2elpzNWFnamZFZ0dXdnBseDNReXV6eklUTVZtUURSUlA2cWlRcFE5WXJMR3NDYUVsSkN6U2hRcGVyOW5GRzhmOWZvZG9IcjRxekRaYVk0MC1hdmVITnFMeE1QckpwSlpmS3daODhXREk5VDNxcGZ2bms0RFg1b2JPNmVxM09nWFhLWWczakZjSDBDS0VWTUNpcDBWc1E?oc=5",
    "ts": 1795172122,
    "published": "Fri, 20 Nov 2026 10:55:22 GMT",
    "summary": "India's RBI expected to raise rates in December, deliver final hike in February &nbsp;&nbsp; Reuters"
-  },
-  {
-   "source": "Google News: Reuters India",
-   "title": "Indian shares rise for fourth straight week as AI rout deepens - Reuters",
-   "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPaEJHRkZDOVdTT19VcGt0YU9SeHdvSmo4cDZVR1R2RzdDUUFJREc0bkNBcDFrUDN1X052bGljQUdsQ19jMTkxZlhYZTI3LW94RUFKb043WXpDZW5mUThLVk95eVcxU005bVNGV0EyY2JlWUlpWDAwZHJDaGJSMlNIMndQZ0QyWGtGVlo4WjB1YjZzNGlfYzBPVFdfaE1MTVdabVZmLXdLdkxsTDJmczdWSW5wRUNlMTg?oc=5",
-   "ts": 1795171447,
-   "published": "Fri, 20 Nov 2026 10:44:07 GMT",
-   "summary": "Indian shares rise for fourth straight week as AI rout deepens &nbsp;&nbsp; Reuters"
   }
  ]
 }
