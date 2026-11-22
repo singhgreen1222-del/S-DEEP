@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Script JSON -> Hindi voice -> host photo + charts -> captions -> MP4 (intro/outro included)."""
-import argparse, asyncio, json, re, subprocess
+import argparse, asyncio, json, os, re, subprocess
 from pathlib import Path
 
 import numpy as np
@@ -328,6 +328,39 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
         log(f"[{slug}] scene {i + 1}/{len(scenes)}")
         if sc.get("chapter"):
             chapters.append([round(t, 1) if chapters else 0.0, sc["chapter"]])
+        if engine == "heygen":
+            from avatar_provider import render_scene
+            avatar_clip = work / f"avatar_scene{i}.mp4"
+            ratio = "9:16" if mode == "short" else "16:9"
+            render_scene(
+                sc["text"], avatar_clip, aspect_ratio=ratio,
+                title=cfg.get("title", "S DEEP"),
+                motion_prompt=os.environ.get(
+                    "HEYGEN_MOTION_PROMPT",
+                    "Speak naturally to camera with subtle head movement, warm expression and restrained hand gestures."
+                ),
+                engine_type=os.environ.get("HEYGEN_ENGINE", "heygen-avatar-6"),
+            )
+            # Normalize provider output so concat demuxer sees identical dimensions/codecs
+            # across scenes, regardless of the provider's internal encoding profile.
+            normalized_clip = work / f"clip{i}.mp4"
+            run([
+                "ffmpeg", "-y", "-loglevel", "error", "-i", avatar_clip,
+                "-vf", f"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2",
+                "-r", FPS, "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+                "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+                "-ar", "44100", "-ac", "2", "-movflags", "+faststart", normalized_clip
+            ])
+            # Provider returns a finished talking-head clip with its own synchronized audio.
+            dur = media_duration(normalized_clip)
+            clips.append(normalized_clip.name)
+            lines = caption_lines(sc["text"], 5 if mode == "short" else 8)
+            weights = [len(l) for l in lines]; tw, tt = sum(weights), t
+            for l, wt in zip(lines, weights):
+                d_ = dur * wt / tw
+                srt.append(f"{n}\n{srt_time(tt)} --> {srt_time(tt + d_)}\n{l}\n"); n += 1; tt += d_
+            t += dur
+            continue
         audio = synth(engine, sc["text"], work / f"a{i}", ref, voice)
         dur = media_duration(audio)
         sym = sc.get("chart")
@@ -395,7 +428,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("script"); ap.add_argument("--engine", choices=["piper", "xtts", "edge", "gtts", "test"], default="piper")
+    ap.add_argument("script"); ap.add_argument("--engine", choices=["xtts", "edge", "gtts", "test", "heygen"], default="piper")
     ap.add_argument("--ref"); ap.add_argument("--voice", default="hi-IN-MadhurNeural")
     ap.add_argument("--host"); ap.add_argument("--music"); ap.add_argument("--out", default="out")
     a = ap.parse_args()

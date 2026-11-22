@@ -80,7 +80,7 @@ a{color:var(--blue)}
     <button data-tab="plan">🧠 Next Plan</button>
     <button data-tab="host">👤 AI Host</button>
     <button data-tab="thumb">🖼 Thumbnail</button>
-    <button data-tab="setup">⚙ Setup &amp; Run</button>
+    <button data-tab="setup">🚀 Run &amp; Preview</button>
   </nav>
 </header>
 <main>
@@ -107,11 +107,22 @@ a{color:var(--blue)}
   <section class="panel" id="p-host">
     <div class="card">
       <h2>AI Host wardrobe</h2>
-      <p class="mut small">Chehra aur pose same rehta hai. Engine har video mein turban/jacket ka rang automatic badalta hai. Yahan preview dekhein.</p>
+      <p class="mut small">Default mode mein original host photo aur wardrobe styling use hoti hai. Real lip-sync presenter ke liye optional HeyGen Digital Twin backend configure karein (neeche setup).</p>
       <canvas id="hostCanvas" width="724" height="543"></canvas>
       <div id="hostMsg" class="small mut" style="margin-top:6px"></div>
       <h3>Turban</h3><div class="sw" id="turbanSw"></div>
       <h3>Jacket</h3><div class="sw" id="jacketSw"></div>
+    </div>
+    <div class="card"><h2>Real AI Presenter (optional)</h2>
+      <p class="small mut">HeyGen Digital Twin se actual talking-head + synchronized lip movement. Ye paid API hai; har scene ek separate render request karta hai. Pehle ek Short ka manual test karein.</p>
+      <ol class="steps small">
+        <li>HeyGen account mein apne face/likeness ka consented Digital Twin banayein; avatar look ID aur Hindi-compatible voice ID note karein.</li>
+        <li>GitHub repository ke Actions secrets mein <code>HEYGEN_API_KEY</code>, <code>HEYGEN_AVATAR_ID</code>, <code>HEYGEN_VOICE_ID</code> set karein.</li>
+        <li>Repository variable <code>ENGINE=heygen</code>, <code>HEYGEN_ENGINE=heygen-avatar-6</code> set karein aur secret <code>HEYGEN_CONFIRM_BILLING=true</code> sirf credits/pricing check karne ke baad set karein.</li>
+        <li>Controlled preview ke liye pehle production variable <code>ENGINE=edge</code> hi rakhein, <code>DRYRUN_ENGINE=heygen</code> set karke manual <b>Dry-run</b> chalayein, artifact review karein, phir <code>DRYRUN_ENGINE=test</code> restore karein.</li>
+        <li>Daily production ko HeyGen par tab tak switch na karein jab tak output aur per-video credits verify na ho.</li>
+      </ol>
+      <div class="banner warn small">HeyGen API pay-as-you-go ho sakta hai. V2/legacy avatar APIs aur v3 engine support alag ho sakte hain. Apne avatar ke supported engines ko HeyGen account/API mein confirm karein. Koi doosre vyakti ka face/voice bina permission use na karein.</div>
     </div>
     <div class="card"><h2>Recent looks (engine ne use kiye)</h2><div id="recentLooks" class="small mut">—</div></div>
   </section>
@@ -132,21 +143,25 @@ a{color:var(--blue)}
   </section>
 
   <section class="panel" id="p-setup">
+
     <div class="card">
-      <h2>1. Engine se connect karein</h2>
-      <p class="small mut">Ye page public hai par isme koi data nahi. Token sirf aapke phone ke browser mein rehta hai aur sirf api.github.com ko jata hai.</p>
-      <label>Engine repo (username/repo)</label><input id="repo" placeholder="singhgreen1222-del/sdeep" autocapitalize="off">
-      <label>Branch</label><input id="branch" value="main">
-      <label>GitHub token (fine-grained: Contents Read, Actions Read &amp; Write)</label><input id="token" type="password" placeholder="github_pat_..." autocapitalize="off">
-      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" id="saveCfg">Save &amp; Connect</button><button class="btn" id="clearCfg">Disconnect</button></div>
-      <div id="cfgMsg" class="small" style="margin-top:8px"></div>
-    </div>
-    <div class="card">
-      <h2>2. Engine chalao</h2>
+      <h2>Engine chalao</h2>
       <div class="grid g3">
         <button class="btn" data-run="dryrun">🧪 Dry-run<br><span class="small mut">1 test Short, upload nahi</span></button>
         <button class="btn" data-run="daily">🎬 Daily<br><span class="small mut">agle 48 ghante</span></button>
         <button class="btn" data-run="weekly">🧠 Weekly<br><span class="small mut">analytics + plan</span></button>
+      </div>
+      <div id="dryrunPreviewBox" style="margin:14px 0;padding:14px;border-radius:12px;background:#141414;border:1px solid #303030;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+          <strong style="font-size:13px;color:#fff;">Latest 1080p Video, Thumbnail, SEO &amp; Script</strong>
+          <button type="button" id="playPreviewBtn"
+             style="padding:9px 16px;border-radius:999px;background:#FF0000;color:#fff;font-weight:700;font-size:12px;border:none;cursor:pointer;">
+            ▶ Play 1080p Video (New Tab)
+          </button>
+        </div>
+        <div id="dryrunMeta" style="font-size:12px;color:#ccc;line-height:1.5;">
+          Dry-run chalane ke baad yahan Thumbnail, SEO Title, Tags aur poori Script dikhegi.
+        </div>
       </div>
       <h3>Recent runs</h3><div id="runs" class="small mut">—</div>
     </div>
@@ -253,7 +268,7 @@ const trunc=(s,n)=>(s||"").length>n?s.slice(0,n-1)+"…":(s||"");
 const fmt=n=>n==null?"—":Number(n).toLocaleString("en-IN");
 function rowsData(){if(!D.state)return[];const V=(D.ana&&D.ana.videos)||{};
   return Object.values(D.state.jobs).filter(j=>j.video_id).map(j=>{const v=V[j.video_id]||{},p=(j.look||"").replace(".jpg","").split("_");
-    return{id:j.id,kind:j.kind,title:j.title,t:Date.parse(j.publish_at),hour:new Date(Date.parse(j.publish_at)+IST).getUTCHours(),turban:p.length>3?p[2]:"-",views:v.views||0,likes:v.likes||0,comments:v.comments||0,pct:v.avg_view_pct,subs:v.subs_gained,link:j.link}}).sort((a,b)=>a.t-b.t)}
+    return{id:j.id,kind:j.kind,title:j.title,t:Date.parse(j.publish_at),hour:new Date(Date.parse(j.publish_at)+IST).getUTCHours(),turban:p.length>3?p[2]:"-",views:v.views||0,likes:v.likes||0,comments:v.comments||0,pct:v.avg_view_pct,subs:v.subs_gained,impressions:v.impressions,ctr:v.impressions_ctr,engaged:v.engaged_views,link:j.link}}).sort((a,b)=>a.t-b.t)}
 function bars(items,cls){const mx=Math.max(1,...items.map(i=>i.v));return items.map(i=>`<div class="bar ${cls||""}"><span class="l">${esc(i.l)}</span><i style="width:${Math.max(2,i.v/mx*100)}%"></i><span>${fmt(i.v)}</span></div>`).join("")}
 function line(vals,labels,color){if(vals.length<2)return'<div class="small mut">Data jama ho raha hai (har Saturday ek point judta hai).</div>';
   const W=320,Hh=110,p=8,mx=Math.max(...vals),mn=Math.min(...vals),r=(mx-mn)||1;
@@ -268,7 +283,7 @@ function renderAnalytics(){
   const H=D.hist||[];$("#growth").innerHTML=`<div class="small mut">Subscribers</div>${line(H.map(h=>h.subs),H.map(h=>h.date),"#3EA6FF")}<div class="small mut" style="margin-top:10px">Total views</div>${line(H.map(h=>h.views),H.map(h=>h.date),"#FF4E45")}`;
   const G=(key,fn)=>{const g={};R.forEach(r=>{const k=fn?fn(r[key]):r[key];(g[k]=g[k]||[]).push(r)});return Object.entries(g).map(([k,v])=>({l:k+" ("+v.length+")",v:Math.round(v.reduce((s,x)=>s+x.views,0)/v.length)}))};
   $("#groups").innerHTML=R.length?`<h3>Type</h3>${bars(G("kind"),"b")}<h3>Publish hour (IST)</h3>${bars(G("hour",h=>h+":00"),"b")}<h3>Turban colour</h3>${bars(G("turban"),"b")}`:'<div class="small mut">Data aane par yahan dikhega.</div>';
-  $("#vtable").innerHTML=R.length?`<tr><th>Date</th><th>Type</th><th>Title</th><th>Views</th><th>Likes</th><th>Avg %</th><th>Subs</th></tr>`+R.slice().reverse().map(r=>`<tr><td>${DAYF.format(r.t)}</td><td>${r.kind}</td><td>${r.link?`<a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(trunc(r.title||r.id,34))}</a>`:esc(r.id)}</td><td>${fmt(r.views)}</td><td>${fmt(r.likes)}</td><td>${r.pct??"—"}</td><td>${fmt(r.subs)}</td></tr>`).join(""):"";
+  $("#vtable").innerHTML=R.length?`<tr><th>Date</th><th>Type</th><th>Title</th><th>Views</th><th>Likes</th><th>Avg %</th><th>Impressions</th><th>CTR</th><th>Engaged</th><th>Subs</th></tr>`+R.slice().reverse().map(r=>`<tr><td>${DAYF.format(r.t)}</td><td>${r.kind}</td><td>${r.link?`<a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(trunc(r.title||r.id,34))}</a>`:esc(r.id)}</td><td>${fmt(r.views)}</td><td>${fmt(r.likes)}</td><td>${r.pct??"—"}</td><td>${r.impressions==null?"—":fmt(r.impressions)}</td><td>${r.ctr==null?"—":r.ctr+"%"}</td><td>${r.engaged==null?"—":fmt(r.engaged)}</td><td>${fmt(r.subs)}</td></tr>`).join(""):"";
 }
 
 /* ---------- next plan ---------- */
@@ -384,5 +399,59 @@ $("#installBtn").onclick=async()=>{if(deferred){deferred.prompt();deferred=null;
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 buildSwatches();initThumb();initSetup();loadAll();
 </script>
+
+<script>
+(function(){
+  const btn = document.getElementById("playPreviewBtn");
+  if (btn) {
+    btn.addEventListener("click", function() {
+      window.open("data/dryrun_preview.mp4", "_blank", "noopener");
+    });
+  }
+  fetch("data/dryrun_preview.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(d => {
+    if (!d) return;
+    const box = document.getElementById("dryrunMeta");
+    const tags = (d.tags || []).join(", ");
+    const hash = (d.hashtags || []).join(" ");
+    const scriptTxt = (d.scenes || []).map(sc => sc.text || "").join(" ");
+    box.innerHTML = `
+      <div style="margin-bottom:8px;"><img src="data/dryrun_preview.jpg" alt="Thumbnail" style="max-width:320px;width:100%;border-radius:8px;border:1px solid #333;" onerror="this.style.display='none'"></div>
+      <div><strong>Title:</strong> ${d.title || ""}</div>
+      <div style="color:#3EA6FF;margin-top:4px;"><strong>Tags:</strong> ${tags}</div>
+      <div style="color:#aaa;margin-top:2px;"><strong>Hashtags:</strong> ${hash}</div>
+      <div style="margin-top:8px;padding:8px;background:#0f0f0f;border-radius:8px;color:#e5e5e5;"><strong>Script:</strong> ${scriptTxt}</div>
+    `;
+  }).catch(() => {});
+})();
+</script>
+
+
+<div id="profileSetupModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.78);padding:16px;overflow-y:auto;">
+  <div style="max-width:480px;margin:40px auto;background:#181818;border:1px solid #303030;border-radius:16px;padding:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <strong style="color:#fff;font-size:15px;">👤 Profile &amp; Engine Setup</strong>
+      <button type="button" id="closeProfileSetupBtn" class="btn" style="padding:4px 10px;font-size:12px;">✕ Close</button>
+    </div>
+        <div class="card">
+      <h2>1. Engine se connect karein</h2>
+      <p class="small mut">Ye page public hai par isme koi data nahi. Token sirf aapke phone ke browser mein rehta hai aur sirf api.github.com ko jata hai.</p>
+      <label>Engine repo (username/repo)</label><input id="repo" placeholder="singhgreen1222-del/sdeep" autocapitalize="off">
+      <label>Branch</label><input id="branch" value="main">
+      <label>GitHub token (fine-grained: Contents Read, Actions Read &amp; Write)</label><input id="token" type="password" placeholder="github_pat_..." autocapitalize="off">
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" id="saveCfg">Save &amp; Connect</button><button class="btn" id="clearCfg">Disconnect</button></div>
+      <div id="cfgMsg" class="small" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const m = document.getElementById("profileSetupModal");
+  const openBtn = document.getElementById("openProfileSetupBtn");
+  const closeBtn = document.getElementById("closeProfileSetupBtn");
+  if (openBtn && m) openBtn.addEventListener("click", () => m.style.display = "block");
+  if (closeBtn && m) closeBtn.addEventListener("click", () => m.style.display = "none");
+})();
+</script>
+
 </body>
 </html>

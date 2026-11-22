@@ -23,16 +23,34 @@ FEEDS = {
 
 # ---------------- state ----------------
 def load():
-    s = json.loads(STATE_F.read_text(encoding="utf-8")) if STATE_F.exists() else {}
-    s.setdefault("jobs", {}); s.setdefault("recent_looks", [])
+    """Load state defensively; a malformed state file must not crash dashboard/automation."""
+    s = {}
+    if STATE_F.exists():
+        try:
+            raw = json.loads(STATE_F.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                s = raw
+            else:
+                print("WARNING: state.json root is not an object; starting with empty state")
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"WARNING: state.json could not be read ({exc}); starting with empty state")
+    if not isinstance(s.get("jobs"), dict):
+        s["jobs"] = {}
+    if not isinstance(s.get("recent_looks"), list):
+        s["recent_looks"] = []
     s["settings"] = {"engine": os.environ.get("ENGINE", "piper"), "voice": os.environ.get("VOICE", "hi-IN-MadhurNeural"),
-                     "model": os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"), "music": "", "intro": True, "ref": ""}
+                     "model": os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite"), "music": "",
+                     "intro": os.environ.get("INTRO", "true").lower() == "true", "ref": os.environ.get("VOICE_REF", "")}
     return s
 
 
 def save(s):
+    """Atomic state write prevents a killed runner from leaving truncated JSON."""
     s2 = {k: v for k, v in s.items() if k != "settings"}
-    STATE_F.write_text(json.dumps(s2, ensure_ascii=False, indent=1), encoding="utf-8")
+    STATE_F.parent.mkdir(parents=True, exist_ok=True)
+    tmp = STATE_F.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(s2, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp, STATE_F)
 
 
 # ---------------- planner ----------------
@@ -120,19 +138,67 @@ def llm_json(s, prompt, tries=2):
     from google import genai
     from google.genai import types
     client, last = genai.Client(api_key=key), None
-    for _ in range(tries):
-        try:
-            r = client.models.generate_content(model=s["settings"]["model"], contents=prompt,
-                                               config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.6))
-            return json.loads(r.text)
-        except Exception as e:
-            last = e; time.sleep(10)
-    raise RuntimeError(f"LLM error: {last}")
+    primary = s["settings"].get("model") or "gemini-3.5-flash-lite"
+    candidates = []
+    for m in (primary, "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash"):
+        if m and m not in candidates:
+            candidates.append(m)
+    for model_name in candidates:
+        for attempt in range(tries):
+            try:
+                r = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.6),
+                )
+                raw = (r.text or "").strip()
+                if raw.startswith("```"):
+                    raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.S).strip()
+                return json.loads(raw)
+            except Exception as e:
+                last = e
+                print(f"  ! {model_name} attempt {attempt + 1} failed: {e}")
+                time.sleep(5 * (attempt + 1))
+    raise RuntimeError(f"LLM error (all fallback models failed): {last}")
 
 
 def _clean_sources(cfg, items, fallback):
-    links = {x["link"] for x in items}
-    cfg["sources"] = [u for u in cfg.get("sources", []) if u in links] or [fallback]
+    links = {x["link"] for x in items if x.get("link")}
+    proposed = cfg.get("sources", [])
+    if not isinstance(proposed, list):
+        proposed = []
+    cfg["sources"] = [u for u in proposed if isinstance(u, str) and u in links]
+    if not cfg["sources"] and fallback and fallback in links:
+        cfg["sources"] = [fallback]
+
+
+def validate_script(cfg, kind):
+    """Reject malformed AI output before it reaches the renderer or YouTube API."""
+    if not isinstance(cfg, dict):
+        raise ValueError("AI response must be a JSON object")
+    title = cfg.get("title")
+    if not isinstance(title, str) or not title.strip() or len(title.strip()) > 100:
+        raise ValueError("Script title missing or longer than YouTube's 100-character limit")
+    scenes = cfg.get("scenes")
+    if not isinstance(scenes, list) or not scenes:
+        raise ValueError("Script must contain at least one scene")
+    for number, scene in enumerate(scenes, 1):
+        if not isinstance(scene, dict) or not isinstance(scene.get("text"), str) or not scene["text"].strip():
+            raise ValueError(f"Scene {number} has no usable narration text")
+        chart = scene.get("chart")
+        if chart not in (None, "^NSEI", "^BSESN", "^NSEBANK"):
+            raise ValueError(f"Scene {number} contains unsupported chart symbol: {chart}")
+    chart_count = sum(1 for scene in scenes if scene.get("chart"))
+    if kind == "short":
+        if not 4 <= len(scenes) <= 6:
+            raise ValueError(f"Short must contain 4-6 scenes; received {len(scenes)}")
+        if chart_count > 1:
+            raise ValueError("Short may contain at most one chart scene")
+    elif kind == "long" and chart_count > 3:
+        raise ValueError("Long video may contain at most three chart sections")
+    if not isinstance(cfg.get("description", ""), str):
+        raise ValueError("Description must be text")
+    return cfg
 
 
 def _unsupported(texts, news):
@@ -153,7 +219,8 @@ OUTLINE_SCHEMA = ('Plan a 20-minute long video in exactly 10 sections (hook, con
 
 def _short(s, items, idx):
     cfg = llm_json(s, _base() + SHORT_SCHEMA + f"Focus story: item [{idx % len(items)}].\nNEWS ITEMS:\n" + news_block(items))
-    _clean_sources(cfg, items, items[idx % len(items)]["link"])
+    _clean_sources(cfg, items, items[idx % len(items)].get("link", ""))
+    validate_script(cfg, "short")
     return cfg
 
 
@@ -176,7 +243,8 @@ def _long(s, items, k):
                     sc.update(chart=sec["chart"], layout="chart_full")
             scenes.append(sc)
     cfg["scenes"] = scenes
-    _clean_sources(cfg, items, rot[0]["link"])
+    _clean_sources(cfg, items, rot[0].get("link", ""))
+    validate_script(cfg, "long")
     return cfg
 
 
@@ -243,7 +311,8 @@ def upload_job(s, jid, log=print):
     cfg = json.loads((SCRIPTS / f"{jid}.json").read_text(encoding="utf-8"))
     r = upload.upload_video(cfg, job["out"], OUT / f"{jid}.jpg", OUT / f"{jid}.srt")
     job.update(uploaded=r["uploadStatus"] in ("uploaded", "processed"), scheduled=bool(r["publishAt"]),
-               video_id=r["id"], link=r["link"], privacy=r["privacy"], error="")
+               video_id=r["id"], link=r["link"], privacy=r["privacy"],
+               upload_warnings=r.get("warnings", []), error="")
     log(f"[{jid}] {r['link']} privacy={r['privacy']} publishAt={r['publishAt']} extras={r['extras']}")
     save(s)
 
@@ -270,7 +339,10 @@ def produce(s, hours=48, max_uploads=5, log=print):
             if not j["scripted"]:
                 generate_script(s, jid, items, log)
             if j["kind"] != "community" and uploads < max_uploads:
-                render_job(s, jid, log); upload_job(s, jid, log); uploads += 1
+                existing_out = Path(j.get("out", ""))
+                if not j.get("rendered") or not existing_out.is_file():
+                    render_job(s, jid, log)
+                upload_job(s, jid, log); uploads += 1
         except Exception as e:
             j["error"] = f"{type(e).__name__}: {e}"[:300]; log(f"[{jid}] FAIL: {j['error']}")
         save(s)
@@ -278,15 +350,32 @@ def produce(s, hours=48, max_uploads=5, log=print):
 
 
 def dryrun(s, log=print):
-    """Ek Short banao, upload NAHI karo (video artifact ke roop mein download karke dekhein)."""
-    now = datetime.now(IST); mon = now.date() - timedelta(days=now.weekday())
-    plan_week(s, mon); plan_week(s, mon + timedelta(days=7))
-    jid = next(j for j in sorted(s["jobs"]) if s["jobs"][j]["kind"] == "short" and datetime.fromisoformat(s["jobs"][j]["publish_at"]) > now)
+    """Render a disposable test Short. Never changes real schedule/state or uploads."""
+    from datetime import datetime
+    import make_video
+
     items = fetch_news()
-    s["jobs"][jid]["scripted"] = False
-    generate_script(s, jid, items, log); render_job(s, jid, log)
-    s["jobs"][jid].update(rendered=False)  # file ephemeral hai; asli run mein dobara banegi
-    save(s); log(f"DRYRUN ready: {OUT / (jid + '.mp4')}")
+    if not items:
+        raise RuntimeError("News feeds se kuch nahi mila; dryrun ke liye news source unavailable hai")
+    stamp = datetime.now(IST).strftime("%Y%m%d_%H%M%S")
+    jid = f"dryrun_{stamp}"
+    cfg = _short(s, items, 0)
+    cfg["mode"] = "short"
+    cfg["publish_at"] = datetime.now(IST).isoformat()
+    script_dir = WORK / "dryrun_scripts"
+    script_dir.mkdir(parents=True, exist_ok=True)
+    script_path = script_dir / f"{jid}.json"
+    script_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    ensure_looks()
+    look = sorted(LOOKS.glob("*.jpg"))[0]
+    engine = os.environ.get("DRYRUN_ENGINE", "test")
+    out = make_video.render_video(cfg, jid, OUT, engine, s["settings"]["ref"],
+                                  s["settings"]["voice"], str(look), None, s["settings"]["intro"], log)
+    thumb = OUT / f"{jid}.jpg"
+    make_video.make_thumb(look, cfg.get("thumb_text"), thumb,
+                          cfg.get("thumb_badge", "S DEEP"), cfg.get("thumb_theme", "gold"))
+    log(f"DRYRUN ready (not uploaded; no schedule/state changed): {out}")
 
 
 def weekly(s, log=print):

@@ -1,5 +1,5 @@
 """YouTube upload with SEO metadata, schedule, captions + verification. Works in cloud via env secrets."""
-import os
+import os, time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -58,34 +58,80 @@ def build_tags(cfg):
 
 
 def upload_video(cfg, video, thumb=None, srt=None, category="25"):
+    """Resumable upload with bounded retries and explicit post-upload verification."""
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
-    status = {"privacyStatus": "private", "selfDeclaredMadeForKids": False, "containsSyntheticMedia": True}
-    if cfg.get("publish_at"):
-        dt = datetime.fromisoformat(cfg["publish_at"]).astimezone(timezone.utc)
+    from googleapiclient.errors import HttpError
+
+    video = Path(video)
+    if not video.is_file() or video.stat().st_size == 0:
+        raise FileNotFoundError(f"Video file missing or empty: {video}")
+    title = str(cfg.get("title", "")).strip()
+    if not title:
+        raise ValueError("YouTube title is empty")
+    if len(title) > 100:
+        raise ValueError("YouTube title exceeds 100 characters")
+    publish_at = cfg.get("publish_at")
+    status = {"privacyStatus": "private", "selfDeclaredMadeForKids": False,
+              "containsSyntheticMedia": True}
+    if publish_at:
+        dt = datetime.fromisoformat(publish_at)
+        if dt.tzinfo is None:
+            raise ValueError("publish_at must include a timezone offset")
+        dt = dt.astimezone(timezone.utc)
         if dt > datetime.now(timezone.utc):
             status["publishAt"] = dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
     yt = build("youtube", "v3", credentials=get_creds())
-    body = {"snippet": {"title": cfg["title"][:100], "description": build_description(cfg), "tags": build_tags(cfg),
-                        "categoryId": category, "defaultLanguage": "hi", "defaultAudioLanguage": "hi"}, "status": status}
+    body = {"snippet": {"title": title, "description": build_description(cfg), "tags": build_tags(cfg),
+                        "categoryId": category, "defaultLanguage": "hi", "defaultAudioLanguage": "hi"},
+            "status": status}
     req = yt.videos().insert(part="snippet,status", body=body,
                              media_body=MediaFileUpload(str(video), chunksize=8 * 1024 * 1024, resumable=True))
     resp = None
+    attempts = 0
     while resp is None:
-        _, resp = req.next_chunk()
-    vid, extras = resp["id"], []
-    if thumb and Path(thumb).exists():
         try:
-            yt.thumbnails().set(videoId=vid, media_body=MediaFileUpload(str(thumb))).execute(); extras.append("thumbnail")
+            _, resp = req.next_chunk()
+            attempts = 0
+        except HttpError as exc:
+            if getattr(exc, "status_code", getattr(getattr(exc, "resp", None), "status", None)) not in (429, 500, 502, 503, 504):
+                raise
+            attempts += 1
+            if attempts >= 5:
+                raise
+            time.sleep(min(2 ** attempts, 30))
         except Exception:
-            pass  # custom thumbnails need a verified channel
-    if srt and Path(srt).exists() and cfg.get("mode") == "long":
+            attempts += 1
+            if attempts >= 5:
+                raise
+            time.sleep(min(2 ** attempts, 30))
+
+    vid = resp.get("id")
+    if not vid:
+        raise RuntimeError("YouTube upload response did not contain a video ID")
+
+    extras = []
+    warnings = []
+    if thumb and Path(thumb).is_file():
+        try:
+            yt.thumbnails().set(videoId=vid, media_body=MediaFileUpload(str(thumb))).execute()
+            extras.append("thumbnail")
+        except Exception as exc:
+            warnings.append(f"thumbnail upload failed: {str(exc)[:160]}")
+    if srt and Path(srt).is_file() and cfg.get("mode") == "long":
         try:
             yt.captions().insert(part="snippet", body={"snippet": {"videoId": vid, "language": "hi", "name": "Hindi"}},
                                  media_body=MediaFileUpload(str(srt), mimetype="application/octet-stream")).execute()
             extras.append("captions")
-        except Exception:
-            pass
-    st = yt.videos().list(part="status", id=vid).execute()["items"][0]["status"]  # real confirmation
+        except Exception as exc:
+            warnings.append(f"captions upload failed: {str(exc)[:160]}")
+
+    response = yt.videos().list(part="status", id=vid).execute()
+    items = response.get("items", [])
+    if not items:
+        raise RuntimeError(f"Upload created {vid}, but YouTube status verification returned no item")
+    st = items[0].get("status", {})
     return {"id": vid, "link": f"https://youtu.be/{vid}", "privacy": st.get("privacyStatus"),
-            "publishAt": st.get("publishAt"), "uploadStatus": st.get("uploadStatus"), "extras": extras}
+            "publishAt": st.get("publishAt"), "uploadStatus": st.get("uploadStatus"),
+            "extras": extras, "warnings": warnings}

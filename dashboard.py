@@ -26,6 +26,12 @@ c1.metric("Subscribers", ch.get("subs", "-")); c2.metric("Total views", ch.get("
 t1, t2, t3, t4, t5 = st.tabs(["📅 Schedule", "📈 Performance", "🧠 Next plan", "📝 Scripts", "⚙️ Run"])
 
 with t1:
+    pending = [j for j in jobs if j.get("error")]
+    upload_warnings = [f"{j['id']}: {w}" for j in jobs for w in j.get("upload_warnings", [])]
+    if pending:
+        st.error(f"{len(pending)} job(s) mein error hai. Details schedule table mein dekhein.")
+    if upload_warnings:
+        st.warning("Upload extras mein dikkat:\\n\\n" + "\\n".join("- " + w for w in upload_warnings))
     rows = [{"slot": j["publish_at"][:16].replace("T", " "), "type": j["kind"], "title": j.get("title", ""),
              "script": "✅" if j["scripted"] else "—", "upload": "✅" if j["uploaded"] else "—",
              "scheduled": "✅" if j["scheduled"] else "—", "look": j.get("look", "").replace(".jpg", "")[8:],

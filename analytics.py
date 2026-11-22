@@ -14,6 +14,17 @@ def _read(name, default):
         return default
 
 
+def _map_analytics_row(row):
+    """Map [videoId, views, minutes, avgDurationSec, avgPct, subs, engagedViews]."""
+    return {
+        "minutes": row[2] if len(row) > 2 else None,
+        "avg_view_sec": row[3] if len(row) > 3 else None,
+        "avg_view_pct": round(row[4], 1) if len(row) > 4 and row[4] is not None else None,
+        "subs_gained": row[5] if len(row) > 5 else None,
+        "engaged_views": row[6] if len(row) > 6 else None,
+    }
+
+
 def fetch(s, log=print):
     import upload
     from googleapiclient.discovery import build
@@ -32,13 +43,29 @@ def fetch(s, log=print):
     try:
         ya = build("youtubeAnalytics", "v2", credentials=creds)
         for i in range(0, len(ids), 50):
+            filt = "video==" + ",".join(ids[i:i + 50])
             r = ya.reports().query(ids="channel==MINE", startDate=(date.today() - timedelta(days=90)).isoformat(),
                                    endDate=date.today().isoformat(), dimensions="video", sort="-views", maxResults=50,
-                                   metrics="views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained",
-                                   filters="video==" + ",".join(ids[i:i + 50])).execute()
+                                   metrics="views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,engagedViews",
+                                   filters=filt).execute()
             for row in r.get("rows", []):
-                out["videos"].setdefault(row[0], {}).update({"minutes": row[2], "avg_view_sec": row[3],
-                                                             "avg_view_pct": round(row[4], 1), "subs_gained": row[5]})
+                out["videos"].setdefault(row[0], {}).update(_map_analytics_row(row))
+            # Reach metrics are optional and queried separately so one unsupported metric
+            # cannot suppress core watch-time/subscriber analytics.
+            try:
+                reach = ya.reports().query(ids="channel==MINE", startDate=(date.today() - timedelta(days=90)).isoformat(),
+                                           endDate=date.today().isoformat(), dimensions="video", sort="-views", maxResults=50,
+                                           metrics="videoThumbnailImpressions,videoThumbnailImpressionsCtr",
+                                           filters=filt).execute()
+                for row in reach.get("rows", []):
+                    out["videos"].setdefault(row[0], {}).update({
+                        "impressions": row[1] if len(row) > 1 else None,
+                        "impressions_ctr": round(row[2], 2) if len(row) > 2 and row[2] is not None else None
+                    })
+            except Exception as reach_error:
+                note = f"Reach metrics unavailable: {str(reach_error)[:120]}"
+                if note not in out["notes"]:
+                    out["notes"].append(note)
     except Exception as e:
         out["notes"].append(f"Analytics API detail nahi mili (API enable/scope check karein): {str(e)[:150]}")
     (DATA / "analytics.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -59,6 +86,8 @@ def table(s):
         rows.append({"id": j["id"], "kind": j["kind"], "title": j.get("title", ""), "hour": j["publish_at"][11:13],
                      "turban": parts[2] if len(parts) > 3 else "", "views": st.get("views", 0), "likes": st.get("likes", 0),
                      "comments": st.get("comments", 0), "avg_view_pct": st.get("avg_view_pct"), "subs_gained": st.get("subs_gained"),
+                     "impressions": st.get("impressions"), "impressions_ctr": st.get("impressions_ctr"),
+                     "engaged_views": st.get("engaged_views"),
                      "privacy": st.get("privacy"), "link": j.get("link", "")})
     return sorted(rows, key=lambda r: r["id"])
 
