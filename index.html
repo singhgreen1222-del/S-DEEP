@@ -72,6 +72,7 @@ a{color:var(--blue)}
     <div class="sp"></div>
     <span id="st" class="chip">Not connected</span>
     <button class="btn sm" id="installBtn" style="display:none">📲 Install</button>
+    <button type="button" class="btn sm" id="openProfileSetupBtn">👤 Setup</button>
     <button class="btn sm" id="refreshBtn">⟳</button>
   </div>
   <nav class="tabs" id="tabs">
@@ -377,7 +378,7 @@ function initThumb(){$("#thTheme").innerHTML=Object.keys(THEMES).map(k=>`<button
 function renderRuns(){const el=$("#runs");if(!D.runs){el.textContent=connected()?"Abhi koi run nahi.":"Connect karein.";return}
   el.innerHTML=D.runs.map(r=>{const ic=r.status!=="completed"?"⏳":r.conclusion==="success"?"✅":"❌";return`<div style="margin:6px 0">${ic} <a href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.event==="schedule"?"scheduled":"manual")} · ${esc(r.display_title||r.name)}</a> <span class="mut">· ${ago(r.created_at)}</span></div>`}).join("")||"—"}
 async function runMode(mode){if(!connected())return toast("Pehle connect karein");
-  if(!confirm(mode==="daily"?"Daily run: agle 48 ghante ke videos banakar YouTube par private+schedule upload honge. Chalayein?":"Run '"+mode+"' chalayein?"))return;
+  toast("Starting " + mode + "…");
   try{await gh(`/repos/${cfg.repo}/actions/workflows/weekly.yml/dispatches`,{method:"POST",body:JSON.stringify({ref:cfg.branch,inputs:{mode}})});toast("Start ho gaya ✔ (5-30 min)");setTimeout(loadAll,6000)}
   catch(e){toast("Fail: "+e.message+(e.status===404?" (weekly.yml path/branch check karein)":e.status===403?" (token mein Actions: write chahiye)":""))}}
 function initSetup(){$("#repo").value=cfg.repo;$("#branch").value=cfg.branch;$("#token").value=cfg.token;
@@ -448,8 +449,9 @@ buildSwatches();initThumb();initSetup();loadAll();
   const m = document.getElementById("profileSetupModal");
   const openBtn = document.getElementById("openProfileSetupBtn");
   const closeBtn = document.getElementById("closeProfileSetupBtn");
-  if (openBtn && m) openBtn.addEventListener("click", () => m.style.display = "block");
-  if (closeBtn && m) closeBtn.addEventListener("click", () => m.style.display = "none");
+  if (openBtn && m) openBtn.addEventListener("click", () => { m.style.display = "block"; });
+  if (closeBtn && m) closeBtn.addEventListener("click", () => { m.style.display = "none"; });
+  if (m) m.addEventListener("click", (e) => { if (e.target === m) m.style.display = "none"; });
 })();
 </script>
 
