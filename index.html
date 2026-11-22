@@ -15,7 +15,7 @@
 html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,"Noto Sans Devanagari",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px}
 body{padding-bottom:env(safe-area-inset-bottom)}
 header{position:sticky;top:0;z-index:30;background:#212121;border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 14px 0}
-.hrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-wrap:wrap}
 .logo{width:36px;height:28px;border-radius:8px;background:var(--red);display:grid;place-items:center;font-size:12px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);color:#0F0F0F;font-weight:800;display:grid;place-items:center}
 .ttl{font-weight:800;font-size:15px}.sub{font-size:11px;color:var(--mut)}
@@ -72,7 +72,7 @@ a{color:var(--blue)}
     <div class="sp"></div>
     <span id="st" class="chip">Not connected</span>
     <button class="btn sm" id="installBtn" style="display:none">📲 Install</button>
-    <button type="button" class="btn sm" id="openProfileSetupBtn">👤 Setup</button>
+    <button type="button" class="btn sm" id="openProfileSetupBtn" style="background:#FF0000;color:#fff;border:none;font-weight:700">👤 Setup</button>
     <button class="btn sm" id="refreshBtn">⟳</button>
   </div>
   <nav class="tabs" id="tabs">
