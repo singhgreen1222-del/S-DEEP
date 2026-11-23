@@ -307,7 +307,7 @@ async function loadAll(){
     ghRaw("data/state.json").catch(e=>{D.err=e.status===401||e.status===403?"auth":D.err;return null}),
     ghRaw("data/analytics.json").catch(()=>null),ghRaw("data/insights.json").catch(()=>null),
     ghRaw("data/analytics_history.json").catch(()=>[]),gh(`/repos/${cfg.repo}/actions/runs?per_page=6`).catch(()=>null)]);
-  D={state,ana,ins,hist:hist||[],runs:runs&&runs.workflow_runs||null,err:D.err};
+  D={state,ana,ins,hist:hist||[],runs:runs&&runs.workflow_runs?runs.workflow_runs.filter(r=>!/pages build/i.test(r.name||"")):null,err:D.err};
   renderAll();
 }
 function renderAll(){renderStatus();renderBanners();renderCalendar();renderAnalytics();renderPlan();renderHostMeta();renderRuns();if(window.scSyncScripts)window.scSyncScripts()}

@@ -143,7 +143,7 @@ def llm_json(s, prompt, tries=2):
     client, last = genai.Client(api_key=key), None
     primary = s["settings"].get("model") or "gemini-3.5-flash-lite"
     candidates = []
-    for m in (primary, "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash"):
+    for m in (primary, "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-2.5-flash"):
         if m and m not in candidates:
             candidates.append(m)
     for model_name in candidates:
@@ -260,7 +260,7 @@ def generate_script(s, jid, items, log=print):
                      'Return JSON {"text":"...","poll":null,"sources":["urls"]}.\nNEWS ITEMS:\n' + news_block(items[idx % 5 * 2:] + items[:idx % 5 * 2]))
         if isinstance(r, list) and r:
             r = r[0]
-        post_txt = (r.get("text") or r.get("post") or r.get("content") or r.get("caption") or "").strip() if isinstance(r, dict) else str(r)
+        post_txt = (r.get("text") or r.get("post") or r.get("content") or r.get("caption") or r.get("message") or r.get("body") or next((str(v) for v in r.values() if isinstance(v, str) and len(v.strip()) > 10), "")).strip() if isinstance(r, dict) else str(r)
         if not post_txt:
             raise ValueError("Empty community post text")
         txt = post_txt + "\n\nSources: " + ", ".join(r.get("sources", []) if isinstance(r, dict) else []) + f"\nPost time: {job['publish_at']}\n(Community post API se nahi hoti: YouTube app > Create > Post se manually daalein.)"
@@ -367,7 +367,35 @@ def dryrun(s, log=print):
         raise RuntimeError("News feeds se kuch nahi mila; dryrun ke liye news source unavailable hai")
     stamp = datetime.now(IST).strftime("%Y%m%d_%H%M%S")
     jid = f"dryrun_{stamp}"
-    cfg = _short(s, items, 0)
+    try:
+        cfg = _short(s, items, 0)
+    except Exception as le:
+        existing = [DATA / "dryrun_preview.json"] + sorted(SCRIPTS.glob("*_short_*.json"), reverse=True)
+        chosen = next((f for f in existing if f.exists()), None)
+        if chosen:
+            log(f"  ! Gemini temporary spike ({le}); reusing {chosen.name} for dryrun video test")
+            cfg = json.loads(chosen.read_text(encoding="utf-8"))
+        else:
+            log(f"  ! Gemini temporary spike ({le}); building fallback dryrun Short from live news")
+            it = items[0]
+            ttl = re.sub(r"[^A-Za-z0-9 %₹+.,:-]", "", it.get("title", "Market Update"))[:65] or "Indian Market Update"
+            cfg = {
+                "title": ttl,
+                "thumb_text": "MARKET UPDATE",
+                "thumb_badge": "BREAKING",
+                "thumb_theme": "bullish",
+                "description": f"{ttl}\n\nSource: {it.get('link', '')}\n{RULES}",
+                "keywords": ["share market", "nifty 50", "indian economy", "s deep"],
+                "hashtags": ["ShareMarket", "Nifty50", "FinanceHindi", "SDEEP"],
+                "tags": ["share market", "nifty 50", "stock market india", "s deep"],
+                "sources": [it["link"]] if it.get("link") else [],
+                "scenes": [
+                    {"text": f"Aaj ki badi market khabar: {ttl}.", "caption": ttl[:55], "headline": ttl[:55], "stat": "LIVE UPDATE", "visual_prompt": "Indian investor Arjun checking market news on laptop", "layout": "host"},
+                    {"text": "Nifty 50 aur Bank Nifty mein aaj institutional activity par sabki nazar bani hui hai.", "caption": "Nifty & Bank Nifty trend", "headline": "Nifty & Bank Nifty", "stat": "NIFTY 50", "chart": "^NSEI", "layout": "host_chart"},
+                    {"text": "Aise waqt mein panic ke bajaye apni SIP aur risk management par focus rakhna samajhdari hai.", "caption": "Disciplined SIP & Risk Control", "headline": "SIP & Risk Control", "stat": "STRATEGY", "visual_prompt": "Financial analyst Meera explaining SIP strategy", "layout": "host"},
+                    {"text": "Aise hi daily finance updates ke liye S DEEP ko subscribe karein. Yeh educational video hai.", "caption": "Subscribe @sdeepworldwide", "headline": "Subscribe S DEEP", "stat": "@sdeepworldwide", "visual_prompt": "Modern Mumbai financial studio", "layout": "host"},
+                ],
+            }
     cfg["mode"] = "short"
     cfg["publish_at"] = datetime.now(IST).isoformat()
     script_dir = WORK / "dryrun_scripts"
