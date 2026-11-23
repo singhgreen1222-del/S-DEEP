@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Script JSON -> Hindi voice -> host photo + charts -> captions -> MP4 (intro/outro included)."""
-import argparse, asyncio, json, os, re, subprocess
+import argparse, asyncio, json, os, re, subprocess, time
 from pathlib import Path
 
 import numpy as np
@@ -136,8 +136,10 @@ def fetch_ai_visual(prompt, out_img, w, h, scene_idx=0, scene_text=""):
                 return str(out_img)
         except Exception as e:
             print(f"  ! AI visual retry {attempt+1}/3 ({e})")
-            if "402" in str(e) or "429" in str(e):
-                time.sleep(5)
+            if "402" in str(e):
+                break
+            if "429" in str(e):
+                time.sleep(4)
     # Graceful fallback: reuse previously fetched AI character image in same work folder if available
     prev_imgs = sorted(Path(out_img).parent.glob("ai_*.jpg"))
     if prev_imgs:
