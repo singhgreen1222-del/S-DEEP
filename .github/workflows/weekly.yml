@@ -57,4 +57,15 @@ jobs:
           path: |
             work/out/*.mp4
             work/out/*.jpg
-          retention-days: 
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Save data (including playable dryrun preview)
+        if: always()
+        run: |
+          if [ "$MODE" = "dryrun" ]; then
+            LATEST_MP4=$(ls -t work/out/*.mp4 2>/dev/null | head -n 1 || true)
+            mkdir -p data
+            if [ -n "$LATEST_MP4" ]; then
+              cp "$LATEST_MP4" data/dryrun_preview.mp4
+            fi
+            LATEST_JPG=$(ls -t work/out/*.jpg 2>/dev/null | head -n 1 || true)
