@@ -84,7 +84,7 @@ a{color:var(--blue)}
 <header>
   <div class="hrow">
     <div class="logo">▶</div><div class="avatar">SD</div>
-    <div><div class="ttl">S DEEP Studio V4</div><div class="sub">@sdeepworldwide · Finance &amp; Share Market · Free Automation</div></div>
+    <div><div class="ttl">S DEEP Studio V5</div><div class="sub">@sdeepworldwide · Finance &amp; Share Market · Free Automation</div></div>
     <div class="sp"></div>
     <span id="st" class="chip">Not connected</span>
     <button class="btn sm" id="installBtn" style="display:none">📲 Install</button>
@@ -154,7 +154,7 @@ a{color:var(--blue)}
       <input type="file" id="thFile" accept="image/*" style="display:none;margin-top:8px">
       <label>Theme</label><div class="sw" id="thTheme"></div>
       <div class="small mut" style="margin-top:8px">Look (turban/jacket) AI Host tab se chuni hui rahegi.</div>
-      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" id="thDl">⬇ Download PNG</button></div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" id="thDl">⬇ Download PNG</button><button class="btn blue" id="thAbBtn">🔀 A/B Variant (Alert/Bullish)</button></div>
       <p class="small mut">Engine har video ke liye yahi design khud banata hai (headline/badge/theme script se aate hain).</p>
     </div>
   </section>
@@ -258,6 +258,13 @@ a{color:var(--blue)}
         </div>
       </div>
       <h3>Recent runs</h3><div id="runs" class="small mut">—</div>
+    </div>
+    <div class="card">
+      <h2>3. ☁ 1-Click GitHub Sync (Bina ZIP khole file push karein)</h2>
+      <p class="small mut">Koi bhi updated file (<code>index.html</code>, <code>make_video.py</code>, <code>sw.js</code>) seedha phone/PC se apne GitHub repo mein push karein.</p>
+      <input type="file" id="ghPushFiles" multiple style="margin-bottom:8px">
+      <button class="btn blue" id="ghPushBtn">☁ Push Selected Files to GitHub</button>
+      <div id="ghPushMsg" class="small mut" style="margin-top:8px"></div>
     </div>
     <div class="card">
       <h2>Checklist</h2>
@@ -875,6 +882,48 @@ buildSwatches();initThumb();initSetup();loadAll();
   $("#scDlCompleteBtn").onclick=()=>{if(!scState.completeVideoUrl)return;const a=document.createElement("a");a.href=scState.completeVideoUrl;a.download="S_DEEP_Complete_3D_Video.mp4";a.click();};
   $("#scZipBtn").onclick=downloadAllVideosZip;
   syncScriptDropdown();renderScenesUI();
+})();
+</script>
+
+<script>
+(function(){
+  const ab = document.getElementById("thAbBtn");
+  if(ab){
+    ab.addEventListener("click", () => {
+      const btns = [...document.querySelectorAll("#thTheme button")];
+      const cur = document.querySelector("#thTheme button.on");
+      const nextName = (cur && cur.dataset.n === "bullish") ? "alert" : "bullish";
+      const target = btns.find(b => b.dataset.n === nextName);
+      if(target) target.click();
+    });
+  }
+  const pushBtn = document.getElementById("ghPushBtn");
+  if(pushBtn){
+    pushBtn.addEventListener("click", async () => {
+      const inp = document.getElementById("ghPushFiles");
+      const msg = document.getElementById("ghPushMsg");
+      if(!cfg.repo || !cfg.token){ toast("Pehle GitHub se connect karein"); return; }
+      if(!inp.files.length){ toast("Pehle file chunein"); return; }
+      pushBtn.disabled = true; msg.textContent = "Uploading…";
+      let ok = 0;
+      for(const f of inp.files){
+        try{
+          const buf = new Uint8Array(await f.arrayBuffer());
+          let bin = ""; for(let i=0;i<buf.length;i++) bin += String.fromCharCode(buf[i]);
+          const b64 = btoa(bin);
+          let sha = undefined;
+          try{ const ex = await gh(`/repos/${cfg.repo}/contents/${f.name}?ref=${encodeURIComponent(cfg.branch)}`); sha = ex.sha; }catch(e){}
+          await gh(`/repos/${cfg.repo}/contents/${f.name}`, {
+            method: "PUT",
+            body: JSON.stringify({ message: "v5 sync: " + f.name, content: b64, branch: cfg.branch, ...(sha?{sha}:{}) })
+          });
+          ok++;
+        }catch(e){ msg.textContent = "Error (" + f.name + "): " + e.message; }
+      }
+      pushBtn.disabled = false;
+      if(ok === inp.files.length) msg.textContent = `✅ ${ok} file(s) GitHub par push ho gayi!`;
+    });
+  }
 })();
 </script>
 </body>

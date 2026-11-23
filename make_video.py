@@ -506,15 +506,22 @@ def ass_time(t):
     h, cs = divmod(cs, 360000); m, cs = divmod(cs, 6000); s, cs = divmod(cs, 100)
     return f"{h}:{m:02}:{s:02}.{cs:02}"
 
-def highlight_ass_line(line):
+def highlight_ass_line(line, dur_sec=2.5):
     rom = dev_to_roman(line)
+    words = rom.split()
+    if not words:
+        return ""
+    total_cs = max(20, int(round(dur_sec * 100)))
+    weights = [max(1, len(w)) for w in words]
+    tw = sum(weights)
     parts = []
-    for w in rom.split():
+    for w, wt in zip(words, weights):
+        k_cs = max(8, int(round(total_cs * wt / tw)))
         clean = re.sub(r"[^A-Za-z0-9%₹]", "", w).upper()
         if clean in _HI_POWER or any(ch.isdigit() for ch in w) or "%" in w or "₹" in w:
-            parts.append(r"{\c&H00D4FF&\b1}" + w.upper() + r"{\c&HFFFFFF&\b1}")
+            parts.append(rf"{{\k{k_cs}\c&H00D4FF&\b1}}{w.upper()}{{\c&HFFFFFF&\b1}}")
         else:
-            parts.append(w)
+            parts.append(rf"{{\k{k_cs}}}{w}")
     return " ".join(parts)
 
 def srt_time(t):
@@ -528,6 +535,60 @@ def caption_lines(text, per):
     return [" ".join(words[i:i + per]) for i in range(0, len(words), per)] or [text]
 
 
+
+def fetch_pexels_broll(query, out_mp4):
+    """Optional free Pexels HD stock B-roll fallback if PEXELS_API_KEY is set."""
+    key = os.environ.get("PEXELS_API_KEY", "").strip()
+    if not key:
+        return None
+    try:
+        import urllib.request, urllib.parse
+        req = urllib.request.Request(
+            f"https://api.pexels.com/videos/search?query={urllib.parse.quote(query[:60])}&per_page=1&orientation=landscape",
+            headers={"Authorization": key, "User-Agent": "S-DEEP-V5/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        vids = data.get("videos") or []
+        if vids:
+            files = sorted(vids[0].get("video_files") or [], key=lambda x: x.get("width", 0), reverse=True)
+            if files and files[0].get("link"):
+                with urllib.request.urlopen(files[0]["link"], timeout=45) as vr:
+                    Path(out_mp4).write_bytes(vr.read())
+                return str(out_mp4)
+    except Exception:
+        pass
+    return None
+
+
+def _gen_pop_sfx(out_wav):
+    """Synthesize a clean subtle pop/chime SFX using ffmpeg lavfi (100% free)."""
+    try:
+        run([
+            "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.18",
+            "-i", "sine=frequency=880:sample_rate=44100",
+            "-af", "afade=t=in:st=0:d=0.02,afade=t=out:st=0.05:d=0.13,volume=0.22",
+            str(out_wav)
+        ])
+        return str(out_wav)
+    except Exception:
+        return None
+
+
+def extract_short_from_long(long_mp4, out_short_mp4, start_sec=15, dur=45):
+    """Auto-cut a 45s 9:16 Short (1080x1920) from a finished 16:9 Long video."""
+    try:
+        run([
+            "ffmpeg", "-y", "-loglevel", "error", "-ss", str(start_sec), "-t", str(dur),
+            "-i", str(long_mp4),
+            "-vf", "scale=1920:1080,crop=608:1080:(1920-608)/2:0,scale=1080:1920",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "21", "-c:a", "aac", "-b:a", "192k",
+            str(out_short_mp4)
+        ])
+        return True
+    except Exception:
+        return False
+
 # ---------------- main renderer ----------------
 def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-MadhurNeural",
                  host=None, music=None, intro=True, log=print):
@@ -538,7 +599,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
     work.mkdir(parents=True, exist_ok=True)
     clips, srt, t, n, chapters = [], [], 0.0, 1, []
     if intro:
-        clips.append(card_clip(mode, "S DEEP", "Finance | Share Market | Indian Economy", work / "intro")); t += CARD
+        clips.append(card_clip(mode, (cfg.get("title") or "S DEEP")[:26], "S DEEP | Market Signal & Analysis", work / "intro")); t += CARD
     charts, frames, scenes = {}, {}, cfg["scenes"]
     for i, sc in enumerate(scenes):
         log(f"[{slug}] scene {i + 1}/{len(scenes)}")
@@ -642,7 +703,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             st_s, en_s = [x.strip().replace(",", ".") for x in parts[1].split("-->")]
             st_sec = sum(float(x) * m for x, m in zip(st_s.split(":"), (3600, 60, 1)))
             en_sec = sum(float(x) * m for x, m in zip(en_s.split(":"), (3600, 60, 1)))
-            ass_lines.append(f"Dialogue: 0,{ass_time(st_sec)},{ass_time(en_sec)},Default,,0,0,0,,{highlight_ass_line(' '.join(parts[2:]))}")
+            ass_lines.append(f"Dialogue: 0,{ass_time(st_sec)},{ass_time(en_sec)},Default,,0,0,0,,{highlight_ass_line(' '.join(parts[2:]), max(0.5, en_sec - st_sec))}")
     (work / "subs.ass").write_text("\n".join(ass_lines), encoding="utf-8")
     (work / "subs.srt").write_text("\n".join(srt), encoding="utf-8")
     (work / "chapters.json").write_text(json.dumps(chapters, ensure_ascii=False), encoding="utf-8")
@@ -658,13 +719,26 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
     if music and Path(music).exists():
         run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-stream_loop", "-1", "-i",
              Path(music).resolve(), "-filter_complex",
-             f"[0:v]{vf}[v];[1:a]volume=0.07[m];[0:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]",
+             f"[0:v]{vf}[v];[1:a]volume=0.10[m];[m][0:a]sidechaincompress=threshold=0.03:ratio=6:attack=50:release=300[duck];[0:a][duck]amix=inputs=2:duration=first:dropout_transition=0,loudnorm=I=-14:TP=-1.0:LRA=7[a]",
              "-map", "[v]", "-map", "[a]", *enc, out], cwd=work)
     else:
         run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "5", "-i", "sine=frequency=110:sample_rate=44100", "-af", "volume=0.025,lowpass=f=220", "ambient.wav"], cwd=work)
         run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-stream_loop", "-1", "-i", "ambient.wav",
-             "-filter_complex", f"[0:v]{vf}[v];[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=0[a]",
+             "-filter_complex", f"[0:v]{vf}[v];[1:a][0:a]sidechaincompress=threshold=0.03:ratio=5:attack=50:release=300[duck];[0:a][duck]amix=inputs=2:duration=first:dropout_transition=0,loudnorm=I=-14:TP=-1.0:LRA=7[a]",
              "-map", "[v]", "-map", "[a]", *enc, out], cwd=work)
+
+    # V5: Auto YouTube chapters, pinned comment, and Long-to-Short auto cut
+    if chapters:
+        ch_lines = []
+        for ts, lbl in chapters:
+            mm, ss = divmod(int(ts), 60)
+            ch_lines.append(f"{mm:02d}:{ss:02d} {lbl}")
+        (out_dir / f"{slug}_chapters.txt").write_text("\n".join(ch_lines), encoding="utf-8")
+    srcs = "\n".join(cfg.get("sources") or [])
+    pinned = f"Aapka is par kya view hai? Comment mein zaroor batayein!\n\nSources:\n{srcs}" if srcs else "Aapka is par kya view hai? Comment mein zaroor batayein!"
+    (out_dir / f"{slug}_pinned_comment.txt").write_text(pinned, encoding="utf-8")
+    if mode == "long" and media_duration(out) > 60:
+        extract_short_from_long(out, out_dir / f"{slug}_auto_short.mp4", start_sec=15, dur=45)
     final = media_duration(out)
     msg = f"DONE {out.name} ({final / 60:.1f} min, {w}x{h}, {FPS}fps)"
     if mode == "long" and not 18 * 60 <= final <= 22 * 60:
