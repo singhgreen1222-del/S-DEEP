@@ -258,7 +258,12 @@ def generate_script(s, jid, items, log=print):
     if kind == "community":
         r = llm_json(s, _base() + 'Write one YouTube Community post (Hindi, <=60 words, with a question to the audience). '
                      'Return JSON {"text":"...","poll":null,"sources":["urls"]}.\nNEWS ITEMS:\n' + news_block(items[idx % 5 * 2:] + items[:idx % 5 * 2]))
-        txt = r["text"] + "\n\nSources: " + ", ".join(r.get("sources", [])) + f"\nPost time: {job['publish_at']}\n(Community post API se nahi hoti: YouTube app > Create > Post se manually daalein.)"
+        if isinstance(r, list) and r:
+            r = r[0]
+        post_txt = (r.get("text") or r.get("post") or r.get("content") or r.get("caption") or "").strip() if isinstance(r, dict) else str(r)
+        if not post_txt:
+            raise ValueError("Empty community post text")
+        txt = post_txt + "\n\nSources: " + ", ".join(r.get("sources", []) if isinstance(r, dict) else []) + f"\nPost time: {job['publish_at']}\n(Community post API se nahi hoti: YouTube app > Create > Post se manually daalein.)"
         (COMM / f"{jid}.txt").write_text(txt, encoding="utf-8")
         job.update(scripted=True, error=""); return
     cfg = _short(s, items, idx) if kind == "short" else _long(s, items, idx)
