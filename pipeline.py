@@ -209,9 +209,9 @@ def _unsupported(texts, news):
     return sorted(norm(texts) - norm(news))
 
 
-SHORT_SCHEMA = ('Write ONE high-retention YouTube Shorts script: 75-100 spoken words, 5-7 fast-paced scenes, first scene is a strong curiosity hook. Return JSON: '
+SHORT_SCHEMA = ('Write ONE high-retention YouTube Shorts script (story/curiosity hook like top finance explainers): 75-100 spoken words, 5-7 fast-paced scenes. Return JSON: '
                 '{"title":"","thumb_text":"2-4 WORDS ROMAN CAPS","thumb_badge":"1-2 WORDS e.g. BREAKING","thumb_theme":"bullish|gold|alert|blue","description":"","keywords":[],"hashtags":[],"tags":[],'
-                '"sources":["urls copied exactly from items"],"scenes":[{"text":"Bolchal Hindi+English voiceover","caption":"Clean Roman Hinglish subtitle","headline":"2-4 WORD VISUAL TITLE","stat":"optional short number/date or empty","chart":null}]}. '
+                '"sources":["urls copied exactly from items"],"scenes":[{"text":"Bolchal Hindi+English voiceover","caption":"Clean Roman Hinglish subtitle","visual_prompt":"cinematic English image prompt for this scene, dark moody finance documentary style, no text","headline":"2-4 WORD VISUAL TITLE","stat":"optional short number/date or empty","chart":null}]}. '
                 'Set "chart" to "^NSEI" or "^BSESN" for ONE scene only if it discusses the overall index trend.\n')
 OUTLINE_SCHEMA = ('Plan a 20-minute long video in exactly 10 sections (hook, context, 3-4 news deep dives, what to watch next, '
                   'risks/uncertainties, recap + disclaimer). Return JSON: {"title":"","thumb_text":"2-4 WORDS ROMAN CAPS","thumb_badge":"1-2 WORDS e.g. BREAKING","thumb_theme":"bullish|gold|alert|blue","description":"",'

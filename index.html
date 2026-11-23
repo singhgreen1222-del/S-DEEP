@@ -62,13 +62,29 @@ canvas{max-width:100%;height:auto;border-radius:12px;background:#000;display:blo
 .banner{border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;line-height:1.5}.banner.bad{background:#FF4E4522;border:1px solid #FF4E4566}.banner.warn{background:#F5B30120;border:1px solid #F5B30160}.banner.info{background:#3EA6FF1c;border:1px solid #3EA6FF55}
 a{color:var(--blue)}
 .steps li{margin:6px 0;line-height:1.5}
+
+.sc-grid{display:grid;gap:12px}
+.sc-chars{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:10px}
+.sc-char{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:flex-start}
+.sc-char img{width:68px;height:68px;border-radius:10px;object-fit:cover;background:#111;border:1px solid #333;flex:none}
+.sc-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.sc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.sc-num{background:var(--red);color:#fff;font-weight:800;font-size:12px;padding:3px 9px;border-radius:8px}
+.sc-prev{position:relative;width:100%;aspect-ratio:16/9;background:#101010;border:1px solid #2e2e2e;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.sc-prev img{width:100%;height:100%;object-fit:cover;display:block}
+.sc-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;font-size:12px}
+@media(max-width:600px){.sc-meta{grid-template-columns:1fr}}
+.sc-box{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px}
+.sc-box b{display:block;font-size:10.5px;color:var(--mut);text-transform:uppercase;margin-bottom:3px}
+.sc-prog{height:8px;background:#252525;border-radius:99px;overflow:hidden;margin:8px 0}
+.sc-prog i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width .25s}
 </style>
 </head>
 <body>
 <header>
   <div class="hrow">
     <div class="logo">▶</div><div class="avatar">SD</div>
-    <div><div class="ttl">S DEEP Studio</div><div class="sub">@sdeepworldwide · Finance &amp; Share Market · Free Automation</div></div>
+    <div><div class="ttl">S DEEP Studio V4</div><div class="sub">@sdeepworldwide · Finance &amp; Share Market · Free Automation</div></div>
     <div class="sp"></div>
     <span id="st" class="chip">Not connected</span>
     <button class="btn sm" id="installBtn" style="display:none">📲 Install</button>
@@ -80,6 +96,7 @@ a{color:var(--blue)}
     <button data-tab="plan">🧠 Next Plan</button>
     <button data-tab="host">👤 AI Host</button>
     <button data-tab="thumb">🖼 Thumbnail</button>
+    <button data-tab="scenes">🎬 AI Scenes</button>
     <button data-tab="setup">⚙ Setup &amp; Run</button>
   </nav>
 </header>
@@ -142,7 +159,75 @@ a{color:var(--blue)}
     </div>
   </section>
 
-  <section class="panel" id="p-setup">
+    <section class="panel" id="p-scenes">
+    <div class="card">
+      <h2>🎬 AI 3D Animated Scene Video Generator (1080p · 16:9)</h2>
+      <p class="small mut">Workflow: <b>Existing Script</b> → <b>Character Detection &amp; Refs</b> → <b>Scene Breakdown (5–10s)</b> → <b>3D Video Generation (Backend API)</b> → <b>Preview / Merge Export</b>. Existing script generator (<code>pipeline.py</code>) untouched hai.</p>
+      <div class="grid g2">
+        <div>
+          <label>Existing Generated Script chunein</label>
+          <select id="scScriptSel"><option value="__dryrun__">Latest Dry-run Script (data/dryrun_preview.json)</option></select>
+        </div>
+        <div>
+          <label>Optional: Gemini Key (client breakdown ke liye; backend Secrets hamesha secure rehte hain)</label>
+          <input id="scGemKey" type="password" placeholder="AIza... (optional)" autocapitalize="off">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn sm" id="scFetchBtn">⟳ Fetch Script</button>
+        <button class="btn sm" id="scSyncCloudBtn">☁ Sync Backend Videos</button>
+        <button class="btn sm" id="scSampleBtn">📝 Sample 3D Story</button>
+        <button class="btn sm" id="scClearBtn">🗑 Clear</button>
+      </div>
+      <label>Script Title &amp; Narration / Dialogues</label>
+      <input id="scTitle" placeholder="Script title..." style="margin-bottom:6px">
+      <textarea id="scRawText" rows="4" placeholder="Existing script automatically load hogi..."></textarea>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">
+        <label style="display:inline-flex;align-items:center;gap:6px;margin:0;color:#fff;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="scSelectAll" checked style="width:auto;margin:0"> Select All Scenes
+        </label>
+        <button class="btn" id="scGenScenesBtn">🧠 Breakdown Script &amp; Characters</button>
+        <button class="btn pri" id="scGenAllVidBtn">🎬 Generate All Videos (Backend)</button>
+        <button class="btn blue" id="scZipBtn">📦 Download All Videos (ZIP)</button>
+      </div>
+      <div id="scProgressWrap" style="display:none;margin-top:10px">
+        <div class="small" id="scProgressTxt">0 / 0 videos ready</div>
+        <div class="sc-prog"><i id="scProgressBar"></i></div>
+      </div>
+      <div id="scApiNotice" class="banner info small" style="margin-top:10px">
+        Backend AI Video API keys (<code>FAL_KEY</code>, <code>LUMA_API_KEY</code>, ya <code>REPLICATE_API_TOKEN</code>) GitHub Actions Secrets mein secure rehte hain. Bina video API key ke fake video preview nahi dikhaya jayega.
+      </div>
+    </div>
+
+    <div class="card" id="scCharCard" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h2 style="margin:0">👤 Character Consistency System (Permanent References)</h2>
+        <button class="btn sm blue" id="scGenRefsBtn">🎨 Generate Character References</button>
+      </div>
+      <p class="small mut" style="margin:6px 0 0">Har character ka naam, age, face, hairstyle, skin tone, body type aur outfit permanent lock rehta hai.</p>
+      <div class="sc-chars" id="scCharList"></div>
+    </div>
+
+    <div class="card" id="scExportCard" style="display:none">
+      <h2>🎞 Complete Video Editing &amp; Export</h2>
+      <div class="grid g4">
+        <div><label>Resolution</label><select id="scExpRes"><option value="1080p">1080p Full HD</option><option value="720p">720p HD</option></select></div>
+        <div><label>Aspect Ratio</label><select id="scExpAspect"><option value="16:9">16:9 Landscape</option><option value="9:16">9:16 Vertical</option></select></div>
+        <div><label>Narration &amp; Dialogues</label><select id="scExpNarr"><option value="true">Include Audio</option><option value="false">Video Only</option></select></div>
+        <div><label>Background Music</label><select id="scExpBgm"><option value="false">Off</option><option value="true">Subtle BGM</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn pri" id="scMergeBtn">🎞 Merge &amp; Export Complete Video</button>
+        <button class="btn" id="scDlCompleteBtn" style="display:none">⬇ Download Complete Video (MP4)</button>
+      </div>
+      <div id="scCompleteBox" style="margin-top:10px"></div>
+    </div>
+
+    <div id="scDashboard" class="sc-grid"></div>
+  </section>
+
+<section class="panel" id="p-setup">
 
         <div class="card">
       <h2>1. Engine se connect karein</h2>
@@ -218,7 +303,7 @@ async function loadAll(){
   D={state,ana,ins,hist:hist||[],runs:runs&&runs.workflow_runs||null,err:D.err};
   renderAll();
 }
-function renderAll(){renderStatus();renderBanners();renderCalendar();renderAnalytics();renderPlan();renderHostMeta();renderRuns()}
+function renderAll(){renderStatus();renderBanners();renderCalendar();renderAnalytics();renderPlan();renderHostMeta();renderRuns();if(window.scSyncScripts)window.scSyncScripts()}
 
 function renderStatus(){const c=$("#st");
   if(!connected()){c.className="chip warn";c.textContent="Not connected";return}
@@ -436,5 +521,360 @@ buildSwatches();initThumb();initSetup();loadAll();
 
 
 
+
+<script>
+(function(){
+  const STYLE_3D = "Photorealistic 3D animated storytelling style, Pixar and Unreal Engine 5 cinematic realism, smooth character movement, natural body language, realistic facial expressions and lip-sync, authentic Indian characters and environments, 16:9 widescreen Full HD 1080p, no text overlay, no collage";
+  const DEFAULT_NEG = "static image, slideshow, zoom only, collage, split screen, grid, text overlay, watermark, deformed hands, extra fingers, distorted face, 2d flat cartoon, blurry, low resolution";
+
+  const CHAR_ARCHETYPES = [
+    {id:"arjun",name:"Arjun",age:"32",role:"Indian Retail Investor",face:"Warm expressive brown eyes, rounded jawline, light trimmed beard, thin round-framed glasses",hairstyle:"Short neat dark black hair",skin_tone:"Warm medium-brown Indian skin tone",body_type:"Lean-medium Indian male build",outfit:"Casual navy blue cotton linen shirt with rolled sleeves",keywords:/\b(aap|you|investor|retail|sip|portfolio|salary|middle class|aam aadmi|demat|trading|profit|loss|paisa|ghar|emi)\b/i},
+    {id:"meera",name:"Meera",age:"30",role:"Indian Financial Analyst",face:"Sharp attentive dark eyes, confident calm expression, oval face",hairstyle:"Shoulder-length wavy dark black hair",skin_tone:"Wheatish-brown Indian skin tone",body_type:"Slim poised Indian female build",outfit:"Tailored charcoal blazer over an ivory kurta top",keywords:/\b(rbi|sebi|analyst|report|data|chart|sensex|nifty|gdp|inflation|cpi|fii|dii|market|stock|index|rate|expert)\b/i},
+    {id:"vikram",name:"Vikram",age:"45",role:"Indian Corporate Executive",face:"Strong clean-shaven jawline, seasoned focused eyes",hairstyle:"Salt-and-pepper neatly side-parted hair",skin_tone:"Warm olive-brown Indian skin tone",body_type:"Broad-shouldered upright Indian male build",outfit:"Dark charcoal tailored suit with a crisp white shirt",keywords:/\b(bank|ceo|company|corporate|psu|ipo|rupee|dollar|govt|government|policy|fund|crore|lakh|billion|trillion)\b/i},
+    {id:"priya",name:"Priya",age:"29",role:"Indian Household Planner",face:"Gentle warm smile, expressive dark eyes, soft rounded cheeks",hairstyle:"Long dark hair tied in a neat low ponytail",skin_tone:"Warm golden-brown Indian skin tone",body_type:"Medium graceful Indian female build",outfit:"Pastel teal cotton kurti with minimal silver earrings",keywords:/\b(family|home|gold|wedding|kitchen|parents|kids|education|rent|budget|savings|bachat|kharcha)\b/i}
+  ];
+
+  const ENVS = [
+    "Modern Mumbai financial workspace overlooking Dalal Street BSE skyline",
+    "Warm realistic middle-class Indian apartment living room with wooden furniture and balcony",
+    "Sleek Bengaluru corporate meeting room with glass walls and city view",
+    "Cozy Indian home study desk with laptop, family photo frame and books"
+  ];
+  const CAMS = [
+    "Slow cinematic dolly push-in at eye level with shallow depth of field",
+    "Smooth horizontal tracking pan across the room",
+    "Three-quarter medium shot with subtle handheld breathing motion",
+    "Over-the-shoulder shot pivoting toward glowing financial data screen",
+    "Wide establishing shot slowly zooming toward the speaker"
+  ];
+  const LIGHTS = [
+    "Warm golden-hour Indian sunlight with soft volumetric rim light",
+    "Dramatic moody amber and cool cyan monitor glow",
+    "Crisp natural daylight with soft cinematic studio fill",
+    "Warm indoor tungsten lamp light with subtle dusk contrast"
+  ];
+
+  let scState = { scriptId:"__dryrun__", title:"", rawText:"", rawScenes:null, characters:[], scenes:[], completeVideoUrl:"" };
+  let pollTimer = null;
+
+  function hashSeed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return(Math.abs(h)%899999)+100000;}
+  function saveScState(){try{LS.set("sd_3d_scenes_v1",JSON.stringify({...scState,characters:scState.characters.map(c=>({...c,refDataUrl:""})),scenes:scState.scenes.map(s=>({...s,videoBlobUrl:""}))}));}catch(e){}}
+  function loadScState(){try{const r=LS.get("sd_3d_scenes_v1");if(r){const p=JSON.parse(r);if(p&&typeof p==="object")scState={...scState,...p};}}catch(e){}}
+
+  function syncScriptDropdown(){
+    const sel=$("#scScriptSel");if(!sel)return;
+    const prev=sel.value||scState.scriptId;
+    let opts=`<option value="__dryrun__">Latest Dry-run Script (data/dryrun_preview.json)</option>`;
+    if(D.state&&D.state.jobs){
+      const jobs=Object.values(D.state.jobs).filter(j=>j.scripted&&j.kind!=="community").sort((a,b)=>Date.parse(b.publish_at||0)-Date.parse(a.publish_at||0));
+      for(const j of jobs)opts+=`<option value="${esc(j.id)}">${esc(j.kind.toUpperCase())} · ${esc(j.title||j.id)}</option>`;
+    }
+    opts+=`<option value="__custom__">Custom / Pasted Script</option>`;
+    sel.innerHTML=opts;
+    if([...sel.options].some(o=>o.value===prev))sel.value=prev;
+  }
+  window.scSyncScripts=syncScriptDropdown;
+
+  async function fetchSelectedScript(){
+    const id=$("#scScriptSel").value;scState.scriptId=id;
+    if(id==="__custom__"){toast("Custom script box mein paste karein");return;}
+    toast("Script fetch ho rahi hai…");
+    try{
+      let data=null;
+      if(id==="__dryrun__"){
+        if(connected())data=await ghRaw("data/dryrun_preview.json").catch(()=>null);
+        if(!data){const r=await fetch("data/dryrun_preview.json?t="+Date.now());if(r.ok)data=await r.json();}
+      }else{
+        if(!connected())throw new Error("GitHub se connect karein");
+        data=await ghRaw(`data/scripts/${id}.json`);
+      }
+      if(!data)throw new Error("Script file nahi mili");
+      scState.title=data.title||id;
+      scState.rawScenes=Array.isArray(data.scenes)?data.scenes:null;
+      scState.rawText=(data.scenes||[]).map(s=>(s.chapter?`[${s.chapter}] `:"")+(s.text||"")).join("\n\n").trim();
+      saveScState();renderScenesUI();toast("Existing script loaded ✔");
+      syncFromCloudManifest(true);
+    }catch(e){toast("Fetch fail: "+e.message);}
+  }
+
+  function loadSampleStory(){
+    scState.scriptId="__sample__";
+    scState.title="FII Entry in Dalal Street: Arjun & Meera Explain";
+    scState.rawScenes=null;
+    scState.rawText=[
+      "Narration: Aaj Mumbai ke Dalal Street par ek bada twist aaya hai — FIIs ne ek hi din mein 10,308 crore rupaye ki buying ki hai.",
+      "Arjun: Meera, pichle 2 mahine se market gir raha tha, maine socha apni SIP rok doon. Kya ab rally wapas aa gayi?",
+      "Meera: Arjun, panic mat karo! RBI ki 5.50% repo rate stability aur 7.6% GDP growth ne market ka confidence wapas laya hai.",
+      "Arjun: Lekin kya mujhe abhi saara paisa ek saath laga dena chahiye?",
+      "Meera: Bilkul nahi! Disciplined SIP aur asset allocation par tike rehna hi long-term wealth banata hai."
+    ].join("\n\n");
+    $("#scScriptSel").value="__custom__";
+    saveScState();renderScenesUI();toast("Sample 3D storytelling script loaded");
+  }
+
+  function detectCharacters(text){
+    const chars=[];
+    for(const a of CHAR_ARCHETYPES){
+      if(a.keywords.test(text)||new RegExp("\\b"+a.name+"\\b","i").test(text)){
+        const seed=hashSeed("sdeep_char_"+a.id);
+        const idLock=`${a.name} (${a.age}yo Indian ${a.role}, ${a.skin_tone}, ${a.face}, ${a.hairstyle}, ${a.body_type}, wearing ${a.outfit})`;
+        chars.push({...a,seed,identity_lock:idLock,refDataUrl:"",refStatus:"idle"});
+      }
+    }
+    if(!chars.length){
+      const a=CHAR_ARCHETYPES[0],seed=hashSeed("sdeep_char_"+a.id);
+      chars.push({...a,seed,identity_lock:`${a.name} (${a.age}yo Indian ${a.role}, ${a.skin_tone}, ${a.face}, ${a.hairstyle}, ${a.body_type}, wearing ${a.outfit})`,refDataUrl:"",refStatus:"idle"});
+    }
+    return chars;
+  }
+
+  function breakdownScenes(){
+    const raw=$("#scRawText").value.trim(),title=$("#scTitle").value.trim()||"S DEEP 3D Story";
+    if(!raw){toast("Pehle existing script load ya paste karein");return;}
+    scState.title=title;scState.rawText=raw;
+    const chars=detectCharacters(title+"\n"+raw);
+    scState.characters=chars;
+
+    const blocks=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    const merged=[];
+    for(const b of blocks){
+      const wc=b.split(/\s+/).length;
+      if(merged.length&&!/^[A-Za-z]+:\s/.test(b)&&(wc<12||merged[merged.length-1].split(/\s+/).length<12)&&(merged[merged.length-1].split(/\s+/).length+wc<=40)){
+        merged[merged.length-1]+=" "+b;
+      }else merged.push(b);
+    }
+
+    scState.scenes=merged.map((txt,i)=>{
+      const wc=txt.split(/\s+/).length;
+      const dur=Math.max(5,Math.min(10,Math.round(wc/3.2)));
+      const dlgMatch=txt.match(/^([A-Za-z]+):\s*(.+)$/);
+      const isNarr=dlgMatch&&dlgMatch[1].toLowerCase()==="narration";
+      const dialogues=(dlgMatch&&!isNarr)?[{speaker:dlgMatch[1],line:dlgMatch[2]}]:[];
+      const narration=isNarr?dlgMatch[2]:(dialogues.length?"":txt);
+      const cMain=chars.find(c=>dialogues.length&&c.name.toLowerCase()===dialogues[0].speaker.toLowerCase())||chars[i%chars.length];
+      const cPresent=[cMain.name];
+      if(chars.length>1&&i%2===1&&!cPresent.includes(chars[(i+1)%chars.length].name))cPresent.push(chars[(i+1)%chars.length].name);
+
+      const actions=`${cMain.name} speaks with natural head movements, realistic lip-sync and expressive hand gestures`;
+      const bg=ENVS[i%ENVS.length],cam=CAMS[i%CAMS.length],light=LIGHTS[i%LIGHTS.length];
+      const anim3d=`Continuous ${dur}s 3D character animation: natural blinking, lip-sync, torso breathing, subtle cloth physics, and ${cam.toLowerCase()}.`;
+      const locked=chars.filter(c=>cPresent.includes(c.name)).map(c=>c.identity_lock).join("; ");
+      const prompt=`${STYLE_3D}. Characters: ${locked}. Action: ${actions}. Environment: ${bg}. Camera: ${cam}. Lighting: ${light}.`;
+      return {
+        scene_number:i+1,title:`Scene ${i+1}`,duration_sec:dur,characters_present:cPresent,
+        actions_and_expressions:actions,narration,dialogues,location_and_background:bg,
+        camera_angle_and_movement:cam,lighting_and_atmosphere:light,animation_3d_instructions:anim3d,
+        video_prompt:prompt,negative_prompt:DEFAULT_NEG,selected:true,status:"queued",retry_count:0,error:"",video_path:"",videoBlobUrl:""
+      };
+    });
+    saveScState();renderScenesUI();
+    toast(`${scState.scenes.length} scenes & ${chars.length} permanent character profiles ready ✔`);
+  }
+
+  async function genCharRef(i){
+    const c=scState.characters[i];if(!c)return;
+    c.refStatus="generating";renderCharacters();
+    const p=`${STYLE_3D}, character reference portrait of ${c.identity_lock}, neutral studio background, centered head and shoulders, single character`;
+    const u=`https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=512&nologo=true&seed=${c.seed}`;
+    try{
+      const r=await fetch(u,{mode:"cors"});if(!r.ok)throw new Error("HTTP "+r.status);
+      const b=await r.blob();
+      c.refDataUrl=URL.createObjectURL(b);c.refStatus="ready";
+    }catch(e){c.refStatus="error";}
+    renderCharacters();
+  }
+  async function genAllCharRefs(){for(let i=0;i<scState.characters.length;i++)await genCharRef(i);toast("Character references updated");}
+
+  async function triggerBackendWorkflow(action, sceneNums){
+    if(!connected()){toast("Backend video generation ke liye pehle Setup tab mein GitHub se connect karein");return;}
+    const inputs={
+      script_id: scState.scriptId||"__dryrun__",
+      action,
+      scene_numbers: sceneNums||"",
+      resolution: $("#scExpRes").value||"1080p",
+      aspect_ratio: $("#scExpAspect").value||"16:9",
+      include_narration: $("#scExpNarr").value||"true",
+      include_bgm: $("#scExpBgm").value||"false"
+    };
+    toast("Backend 3D Video job start ho raha hai…");
+    try{
+      await gh(`/repos/${cfg.repo}/actions/workflows/scene_videos.yml/dispatches`,{method:"POST",body:JSON.stringify({ref:cfg.branch,inputs})});
+      toast("Job started ✔ Cloud progress sync ho raha hai…");
+      clearInterval(pollTimer);
+      pollTimer=setInterval(()=>syncFromCloudManifest(true),7000);
+      setTimeout(()=>syncFromCloudManifest(true),4000);
+    }catch(e){
+      toast("Dispatch fail: "+e.message+(e.status===404?" (.github/workflows/scene_videos.yml repo mein upload karein)":""));
+    }
+  }
+
+  async function syncFromCloudManifest(silent){
+    if(!connected()){if(!silent)toast("GitHub se connect karein");return;}
+    const sid=scState.scriptId||"__dryrun__";
+    try{
+      const m=await ghRaw(`data/scene_videos/${sid}/manifest.json`);
+      if(!m||!Array.isArray(m.scenes))return;
+      if(Array.isArray(m.characters)&&m.characters.length)scState.characters=m.characters;
+      scState.scenes=m.scenes.map(s=>({...s,selected:true,videoBlobUrl:""}));
+      if(m.complete_video_path){
+        try{const vb=await ghRaw(m.complete_video_path,"blob");scState.completeVideoUrl=URL.createObjectURL(vb);}catch(e){}
+      }
+      for(const s of scState.scenes){
+        if(s.status==="ready"&&s.video_path){
+          try{const vb=await ghRaw(s.video_path,"blob");s.videoBlobUrl=URL.createObjectURL(vb);}catch(e){}
+        }
+      }
+      renderScenesUI();
+      if(!silent)toast("Cloud status synced ✔");
+    }catch(e){if(!silent)toast("Abhi cloud mein is script ke videos nahi hain");}
+  }
+
+  function updateProgress(){
+    const wrap=$("#scProgressWrap");
+    if(!scState.scenes.length){wrap.style.display="none";return;}
+    wrap.style.display="block";
+    const total=scState.scenes.length;
+    const ready=scState.scenes.filter(s=>s.status==="ready"&&s.videoBlobUrl).length;
+    const gen=scState.scenes.filter(s=>s.status==="generating").length;
+    $("#scProgressTxt").textContent=`${ready} / ${total} scene videos ready`+(gen?` (${gen} generating…)`:``);
+    $("#scProgressBar").style.width=Math.round((ready/total)*100)+"%";
+  }
+
+  function renderCharacters(){
+    const card=$("#scCharCard"),list=$("#scCharList");
+    if(!scState.characters.length){card.style.display="none";return;}
+    card.style.display="block";
+    list.innerHTML=scState.characters.map((c,i)=>`
+      <div class="sc-char">
+        ${c.refDataUrl?`<img src="${esc(c.refDataUrl)}" alt="${esc(c.name)}">`:`<div style="width:68px;height:68px;border-radius:10px;background:#111;border:1px solid #333;display:grid;place-items:center;font-size:11px;color:#888;flex:none">${c.refStatus==="generating"?"⏳":"Ref"}</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px">${esc(c.name)} <span class="small mut">· Age ${esc(c.age)} · ${esc(c.role)}</span></div>
+          <div class="small mut" style="margin:3px 0;line-height:1.35"><b>Face:</b> ${esc(c.face)}<br><b>Hair/Skin:</b> ${esc(c.hairstyle)}, ${esc(c.skin_tone)}<br><b>Body/Outfit:</b> ${esc(c.body_type)}, ${esc(c.outfit)}</div>
+          <button class="btn sm" data-crefi="${i}" style="margin-top:4px">${c.refStatus==="generating"?"⏳ Generating…":"🎨 Gen Ref"}</button>
+        </div>
+      </div>`).join("");
+    $$("[data-crefi]",list).forEach(b=>b.onclick=()=>genCharRef(+b.dataset.crefi));
+  }
+
+  function renderScenesDashboard(){
+    const el=$("#scDashboard"),exp=$("#scExportCard");
+    if(!scState.scenes.length){
+      exp.style.display="none";
+      el.innerHTML=`<div class="card mut small">Existing script select karke <b>🧠 Breakdown Script &amp; Characters</b> dabayein.</div>`;
+      updateProgress();return;
+    }
+    exp.style.display="block";
+    if(scState.completeVideoUrl){
+      $("#scDlCompleteBtn").style.display="inline-block";
+      $("#scCompleteBox").innerHTML=`<video controls playsinline style="width:100%;border-radius:12px;background:#000" src="${esc(scState.completeVideoUrl)}"></video>`;
+    }
+    el.innerHTML=scState.scenes.map((s,i)=>{
+      const pill=s.status==="ready"&&s.videoBlobUrl?`<span class="pill y">✅ Ready</span>`
+        :s.status==="generating"?`<span class="pill w">⏳ Generating…</span>`
+        :s.status==="api_not_configured"?`<span class="pill w">⚠ API Key Required (Backend)</span>`
+        :s.status==="failed"?`<span class="pill r">❌ Failed (retry ${s.retry_count||0})</span>`
+        :`<span class="pill">Queued</span>`;
+      const dlgTxt=(s.dialogues||[]).map(d=>`${d.speaker}: "${d.line}"`).join("\n");
+      return `
+      <div class="sc-card">
+        <div class="sc-head">
+          <input type="checkbox" data-ssel="${i}" ${s.selected?"checked":""} style="width:auto;margin:0">
+          <span class="sc-num">Scene ${s.scene_number}</span>
+          <strong style="font-size:13px">${esc(s.title)}</strong>
+          <span class="pill">${s.duration_sec}s · 1080p 16:9</span>
+          ${pill}
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn sm" data-sup="${i}" title="Move Up">↑</button>
+            <button class="btn sm" data-sdn="${i}" title="Move Down">↓</button>
+          </div>
+        </div>
+        <div class="sc-prev">
+          ${s.videoBlobUrl?`<video controls playsinline style="width:100%;height:100%;object-fit:cover" src="${esc(s.videoBlobUrl)}"></video>`
+            :`<div style="padding:16px;text-align:center" class="small mut">${s.error?`<b>Backend Status:</b> ${esc(s.error)}`:"Real 3D MP4 clip abhi generate nahi hua. Backend par <b>🎬 Generate All Videos</b> chalayein (fake preview nahi dikhaya jata)."}</div>`}
+        </div>
+        <div class="sc-meta">
+          <div class="sc-box"><b>Narration</b>${esc(s.narration||"—")}</div>
+          <div class="sc-box"><b>Character Dialogues</b>${esc(dlgTxt||"—")}</div>
+          <div class="sc-box"><b>Characters &amp; Actions</b>${esc((s.characters_present||[]).join(", "))} — ${esc(s.actions_and_expressions)}</div>
+          <div class="sc-box"><b>Location &amp; Lighting</b>${esc(s.location_and_background)} · ${esc(s.lighting_and_atmosphere)}</div>
+          <div class="sc-box"><b>Camera Movement</b>${esc(s.camera_angle_and_movement)}</div>
+          <div class="sc-box"><b>3D Animation Instructions</b>${esc(s.animation_3d_instructions)}</div>
+        </div>
+        <div data-seditbox="${i}" style="display:none;margin-top:8px">
+          <label>Duration (5-10 sec)</label><input type="number" min="5" max="10" value="${s.duration_sec}" data-sdur="${i}">
+          <label>3D Video Generation Prompt</label><textarea rows="3" data-sprompt="${i}">${esc(s.video_prompt)}</textarea>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn sm blue" data-sregen="${i}">🔄 Regenerate Video</button>
+          <button class="btn sm" data-sdl="${i}" ${s.videoBlobUrl?"":"disabled"}>⬇ Download Video</button>
+          <button class="btn sm" data-sedit="${i}">✏ Edit Scene</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    $$("[data-ssel]",el).forEach(cb=>cb.onchange=()=>{scState.scenes[+cb.dataset.ssel].selected=cb.checked;saveScState();});
+    $$("[data-sup]",el).forEach(b=>b.onclick=()=>{const i=+b.dataset.sup;if(i>0){[scState.scenes[i-1],scState.scenes[i]]=[scState.scenes[i],scState.scenes[i-1]];scState.scenes.forEach((x,k)=>x.scene_number=k+1);saveScState();renderScenesDashboard();}});
+    $$("[data-sdn]",el).forEach(b=>b.onclick=()=>{const i=+b.dataset.sdn;if(i<scState.scenes.length-1){[scState.scenes[i+1],scState.scenes[i]]=[scState.scenes[i],scState.scenes[i+1]];scState.scenes.forEach((x,k)=>x.scene_number=k+1);saveScState();renderScenesDashboard();}});
+    $$("[data-sedit]",el).forEach(b=>b.onclick=()=>{const box=$(`[data-seditbox="${b.dataset.sedit}"]`);box.style.display=box.style.display==="none"?"block":"none";});
+    $$("[data-sdur]",el).forEach(inp=>inp.onchange=()=>{scState.scenes[+inp.dataset.sdur].duration_sec=Math.max(5,Math.min(10,+inp.value||5));saveScState();});
+    $$("[data-sprompt]",el).forEach(ta=>ta.oninput=()=>{scState.scenes[+ta.dataset.sprompt].video_prompt=ta.value;saveScState();});
+    $$("[data-sregen]",el).forEach(b=>b.onclick=()=>triggerBackendWorkflow("regenerate_scene",String(scState.scenes[+b.dataset.sregen].scene_number)));
+    $$("[data-sdl]",el).forEach(b=>b.onclick=()=>{const s=scState.scenes[+b.dataset.sdl];if(!s||!s.videoBlobUrl)return;const a=document.createElement("a");a.href=s.videoBlobUrl;a.download=`scene_${String(s.scene_number).padStart(2,"0")}.mp4`;a.click();});
+    updateProgress();
+  }
+
+  function renderScenesUI(){
+    $("#scTitle").value=scState.title||"";
+    $("#scRawText").value=scState.rawText||"";
+    renderCharacters();
+    renderScenesDashboard();
+  }
+
+  function buildZip(entries){
+    const tbl=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);tbl[i]=c;}
+    const crc32=buf=>{let c=0xffffffff;for(let i=0;i<buf.length;i++)c=tbl[(c^buf[i])&0xff]^(c>>>8);return(c^0xffffffff)>>>0;};
+    const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;
+    for(const e of entries){
+      const nb=enc.encode(e.name),d=e.data,crc=crc32(d);
+      const lh=new Uint8Array(30+nb.length),lv=new DataView(lh.buffer);
+      lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint32(14,crc,true);lv.setUint32(18,d.length,true);lv.setUint32(22,d.length,true);lv.setUint16(26,nb.length,true);lh.set(nb,30);
+      locals.push(lh,d);
+      const ch=new Uint8Array(46+nb.length),cv=new DataView(ch.buffer);
+      cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint32(16,crc,true);cv.setUint32(20,d.length,true);cv.setUint32(24,d.length,true);cv.setUint16(28,nb.length,true);cv.setUint32(42,offset,true);ch.set(nb,46);
+      centrals.push(ch);offset+=lh.length+d.length;
+    }
+    const cSize=centrals.reduce((s,a)=>s+a.length,0),eocd=new Uint8Array(22),ev=new DataView(eocd.buffer);
+    ev.setUint32(0,0x06054b50,true);ev.setUint16(8,entries.length,true);ev.setUint16(10,entries.length,true);ev.setUint32(12,cSize,true);ev.setUint32(16,offset,true);
+    return new Blob([...locals,...centrals,eocd],{type:"application/zip"});
+  }
+
+  async function downloadAllVideosZip(){
+    const ready=scState.scenes.filter(s=>s.videoBlobUrl);
+    if(!ready.length){toast("Koi generated MP4 video clip ready nahi hai");return;}
+    const entries=[];
+    for(const s of ready){
+      const buf=new Uint8Array(await (await fetch(s.videoBlobUrl)).arrayBuffer());
+      entries.push({name:`scene_${String(s.scene_number).padStart(2,"0")}.mp4`,data:buf});
+    }
+    entries.push({name:"manifest.json",data:new TextEncoder().encode(JSON.stringify(scState,null,2))});
+    const a=document.createElement("a");a.href=URL.createObjectURL(buildZip(entries));
+    a.download=`S_DEEP_3D_Videos_${(scState.scriptId||"pack").replace(/[^a-z0-9_-]/gi,"_")}.zip`;a.click();
+    toast("ZIP download shuru ho gaya ✔");
+  }
+
+  loadScState();
+  $("#scFetchBtn").onclick=fetchSelectedScript;
+  $("#scSyncCloudBtn").onclick=()=>syncFromCloudManifest(false);
+  $("#scSampleBtn").onclick=loadSampleStory;
+  $("#scClearBtn").onclick=()=>{scState.characters=[];scState.scenes=[];scState.completeVideoUrl="";saveScState();renderScenesUI();toast("Cleared");};
+  $("#scSelectAll").onchange=e=>{scState.scenes.forEach(s=>s.selected=e.target.checked);saveScState();renderScenesDashboard();};
+  $("#scGenScenesBtn").onclick=breakdownScenes;
+  $("#scGenRefsBtn").onclick=genAllCharRefs;
+  $("#scGenAllVidBtn").onclick=()=>{const sel=scState.scenes.filter(s=>s.selected).map(s=>s.scene_number).join(",");triggerBackendWorkflow("breakdown_and_generate",sel);};
+  $("#scMergeBtn").onclick=()=>{const sel=scState.scenes.filter(s=>s.selected).map(s=>s.scene_number).join(",");triggerBackendWorkflow("merge_export",sel);};
+  $("#scDlCompleteBtn").onclick=()=>{if(!scState.completeVideoUrl)return;const a=document.createElement("a");a.href=scState.completeVideoUrl;a.download="S_DEEP_Complete_3D_Video.mp4";a.click();};
+  $("#scZipBtn").onclick=downloadAllVideosZip;
+  syncScriptDropdown();renderScenesUI();
+})();
+</script>
 </body>
-</html>

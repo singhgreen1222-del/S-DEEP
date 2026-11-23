@@ -71,17 +71,66 @@ def _phonetic_hi(text):
     return text
 
 
+
+def tts_gemini(text, out_wav):
+    """Natural human-like Hindi/Hinglish voice using existing GEMINI_API_KEY (free tier) + silence trim + 1.08x pacing."""
+    key = os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        raise RuntimeError("No GEMINI_API_KEY")
+    import base64, urllib.request
+    payload = json.dumps({
+        "contents": [{"parts": [{"text": "Speak in a deep, authoritative, warm Indian Hindi/Hinglish male YouTuber voice (bhari, clear, confident storytelling tone): " + _phonetic_hi(text)}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": "Charon"}}}
+        }
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key={key}",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    b64 = data["candidates"][0]["content"]["parts"][0]["inlineData"]["data"]
+    raw_pcm = Path(out_wav).with_name(Path(out_wav).stem + "_gem.pcm")
+    raw_pcm.write_bytes(base64.b64decode(b64))
+    run([
+        "ffmpeg", "-y", "-loglevel", "error", "-f", "s16le", "-ar", "24000", "-ac", "1", "-i", raw_pcm,
+        "-af", "silenceremove=start_periods=1:start_silence=0.1:start_threshold=-45dB,atempo=1.08,loudnorm=I=-15:TP=-1.5:LRA=9",
+        str(out_wav),
+    ])
+
+
+def fetch_ai_visual(prompt, out_img, w, h):
+    """Fetch free AI cinematic visual (Pollinations.ai, no key) with safe fallback."""
+    if not prompt:
+        return None
+    try:
+        import urllib.parse, urllib.request
+        q = urllib.parse.quote(prompt + ", dark cinematic documentary lighting, ultra detailed, 8k, no text, no watermark")
+        url = f"https://image.pollinations.ai/prompt/{q}?width={w}&height={h}&nologo=true&seed=42"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=25) as r:
+            raw = r.read()
+        if len(raw) > 5000:
+            Path(out_img).write_bytes(raw)
+            return str(out_img)
+    except Exception as e:
+        print(f"  ! AI visual skip ({e})")
+    return None
+
 def tts_piper(text, out_wav, model="hi_IN-pratham-medium"):
     raw_wav = Path(out_wav).with_name(Path(out_wav).stem + "_raw.wav")
     spoken = _phonetic_hi(text)
     # Use lighter Rohan model if downloaded, else Pratham with +9% pitch lift & clarity EQ (removes heavy "data speaker" bass)
-    chosen = "hi_IN-rohan-medium" if Path("hi_IN-rohan-medium.onnx").exists() else model
+    chosen = model
     subprocess.run(
-        ["piper", "--model", chosen, "--length_scale", "0.86", "--output_file", str(raw_wav)],
+        ["piper", "--model", chosen, "--length_scale", "0.90", "--output_file", str(raw_wav)],
         input=spoken.encode("utf-8"),
         check=True,
     )
-    af = "highpass=f=125,asetrate=22050*1.09,aresample=22050,atempo=0.96,treble=g=3,loudnorm=I=-15:TP=-1.5:LRA=9"
+    af = "aresample=22050,bass=g=2,loudnorm=I=-15:TP=-1.5:LRA=9"
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", raw_wav, "-af", af, str(out_wav)])
 
 def tts_edge(text, out_mp3, voice):
@@ -113,11 +162,15 @@ def synth(engine, text, base, ref, voice):
         if engine == "piper":
             p = base.with_suffix(".wav")
             try:
-                tts_piper(text, p)
-            except Exception as e:
-                print(f"  ! piper fail ({e}); gTTS fallback")
-                p = base.with_suffix(".mp3")
-                tts_gtts(text, p)
+                tts_gemini(text, p)
+            except Exception as ge:
+                print(f"  ! gemini-tts skip ({ge}); trying piper")
+                try:
+                    tts_piper(text, p)
+                except Exception as e:
+                    print(f"  ! piper fail ({e}); gTTS fallback")
+                    p = base.with_suffix(".mp3")
+                    tts_gtts(text, p)
         elif engine == "gtts":
             tts_gtts(text, p)
         else:
@@ -244,9 +297,15 @@ def _draw_cinematic_bg(w, h, scene_idx=0):
     return img, acc
 
 
-def make_frame(mode, layout, chart_png, host_path, out_png, headline="", stat="", scene_idx=0, total_scenes=1):
+def make_frame(mode, layout, chart_png, host_path, out_png, headline="", stat="", scene_idx=0, total_scenes=1, ai_img_path=None):
     w, h = SIZES[mode]
     img, acc = _draw_cinematic_bg(w, h, scene_idx=scene_idx)
+    if ai_img_path and Path(ai_img_path).exists():
+        try:
+            ai_im = cover(Image.open(ai_img_path).convert("RGB"), w, h, cx=0.5, cy=0.5)
+            img = Image.blend(ai_im, img, 0.25)
+        except Exception:
+            pass
     d = ImageDraw.Draw(img)
     if chart_png:
         paste_fit(img, Image.open(chart_png).convert("RGB"), full_box(mode), outline=True)
@@ -277,13 +336,26 @@ def make_frame(mode, layout, chart_png, host_path, out_png, headline="", stat=""
                 cur = wd
         if cur:
             lines.append(cur)
-        hf = font(56 if mode == "short" else 62)
-        ty = cy0 + 135
+        hf = font(52 if mode == "short" else 58)
+        ty = cy0 + (210 if stat else 130)
         for ln in lines[:4]:
             d.text((pad_x + 40, ty), ln, font=hf, fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
             ty += 76
     bottom_shade(img, frac=0.28, maxa=190)
     d = ImageDraw.Draw(img)
+    # Glassmorphism live data card overlay when AI 3D scene + stat are present
+    if ai_img_path and stat:
+        gx0, gy0 = 36, 105
+        gx1, gy1 = min(w - 36, 560), 255
+        ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        od = ImageDraw.Draw(ov)
+        od.rounded_rectangle([gx0, gy0, gx1, gy1], radius=18, fill=(15, 20, 30, 215), outline=acc + (255,), width=3)
+        img = Image.alpha_composite(img.convert("RGBA"), ov).convert("RGB")
+        d = ImageDraw.Draw(img)
+        d.text((gx0 + 22, gy0 + 18), "MARKET SIGNAL", font=font(24), fill=acc)
+        d.text((gx0 + 22, gy0 + 52), str(stat)[:22], font=font(44), fill=(255, 255, 255))
+        if headline:
+            d.text((gx0 + 22, gy0 + 108), str(headline)[:38], font=font(22), fill=(203, 213, 225))
     d.text((34, 30), "S DEEP", font=font(50), fill=YELLOW, stroke_width=3, stroke_fill=(0, 0, 0))
     if mode == "long":
         d.text((w - 40, 44), DISCLAIMER, font=font(24), fill=(203, 213, 225), anchor="ra", stroke_width=2, stroke_fill=(0, 0, 0))
@@ -519,15 +591,27 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             chart_png = charts[key]
             if chart_png is None:
                 layout = "host"
-        fk = (i, layout, str(chart_png))
+        ai_img = None
+        if not chart_png and engine != "test" and sc.get("visual_prompt"):
+            ai_img = fetch_ai_visual(sc["visual_prompt"], work / f"ai_{i}.jpg", w, h)
+        fk = (i, layout, str(chart_png), str(ai_img))
         if fk not in frames:
             fp = work / f"frame{len(frames)}.png"
-            make_frame(mode, layout, chart_png, None, fp, headline=sc.get("headline") or sc.get("caption") or sc["text"][:80], stat=sc.get("stat", ""), scene_idx=i, total_scenes=len(scenes))
+            make_frame(mode, layout, chart_png, None, fp, headline=sc.get("headline") or sc.get("caption") or sc["text"][:80], stat=sc.get("stat", ""), scene_idx=i, total_scenes=len(scenes), ai_img_path=ai_img)
             frames[fk] = fp
         total = dur + PAD
         clip = work / f"clip{i}.mp4"
         n_frames = max(1, int(round(total * int(FPS))))
-        zp = f"scale=iw*1.08:ih*1.08,zoompan=z='min(zoom+0.0005,1.08)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
+        # Dynamic motion-image camera choreography (alternating push-in, pan-right, zoom-out, pan-left)
+        _m = i % 4
+        if _m == 0:
+            zp = f"scale=iw*1.16:ih*1.16,zoompan=z='min(zoom+0.0018,1.16)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
+        elif _m == 1:
+            zp = f"scale=iw*1.18:ih*1.18,zoompan=z='1.12':d={n_frames}:x='(iw-iw/zoom)*on/{max(1,n_frames)}':y='(ih-ih/zoom)/2':s={w}x{h}:fps={FPS}"
+        elif _m == 2:
+            zp = f"scale=iw*1.16:ih*1.16,zoompan=z='max(1.15-0.0016*on,1.0)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
+        else:
+            zp = f"scale=iw*1.18:ih*1.18,zoompan=z='1.12':d={n_frames}:x='(iw-iw/zoom)*(1-on/{max(1,n_frames)})':y='(ih-ih/zoom)/2':s={w}x{h}:fps={FPS}"
         run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", FPS, "-i", frames[fk], "-i", audio,
              "-vf", zp, "-af", f"apad=pad_dur={PAD}", "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "fast",
              "-pix_fmt", "yuv420p", "-r", FPS, "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", clip])
@@ -577,7 +661,10 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
              f"[0:v]{vf}[v];[1:a]volume=0.07[m];[0:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]",
              "-map", "[v]", "-map", "[a]", *enc, out], cwd=work)
     else:
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-vf", vf, *enc, out], cwd=work)
+        run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "5", "-i", "sine=frequency=110:sample_rate=44100", "-af", "volume=0.025,lowpass=f=220", "ambient.wav"], cwd=work)
+        run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-stream_loop", "-1", "-i", "ambient.wav",
+             "-filter_complex", f"[0:v]{vf}[v];[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=0[a]",
+             "-map", "[v]", "-map", "[a]", *enc, out], cwd=work)
     final = media_duration(out)
     msg = f"DONE {out.name} ({final / 60:.1f} min, {w}x{h}, {FPS}fps)"
     if mode == "long" and not 18 * 60 <= final <= 22 * 60:
