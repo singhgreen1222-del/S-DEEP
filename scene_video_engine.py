@@ -302,6 +302,7 @@ def _call_video_api(scene: dict, ref_img_path: Path | None, out_mp4: Path) -> st
     Calls configured AI Video Generation API using backend secrets.
     Returns provider name on success; raises RuntimeError with honest reason otherwise.
     """
+    agnes_key = os.environ.get("AGNES_API_KEY", "").strip()
     fal_key = os.environ.get("FAL_KEY", "").strip()
     luma_key = os.environ.get("LUMA_API_KEY", "").strip()
     rep_token = os.environ.get("REPLICATE_API_TOKEN", "").strip()
@@ -309,6 +310,41 @@ def _call_video_api(scene: dict, ref_img_path: Path | None, out_mp4: Path) -> st
 
     prompt = scene["video_prompt"]
     dur = scene.get("duration_sec", 5)
+
+    # 0. Agnes AI Video 2.5 (AGNES_API_KEY)
+    if agnes_key:
+        sec_str = str(max(4, min(12, int(dur))))
+        sub = _http_json(
+            "https://apihub.agnes-ai.com/v1/videos",
+            payload={
+                "model": "agnes-video-2.5",
+                "prompt": prompt,
+                "mode": "text",
+                "seconds": sec_str,
+                "size": "1080P",
+                "aspect_ratio": "16:9",
+                "n": 1,
+                "seed": int(scene.get("seed", 42)),
+            },
+            headers={"Authorization": f"Bearer {agnes_key}"},
+        )
+        vid_id = sub.get("video_id") or sub.get("id") or sub.get("task_id")
+        if not vid_id:
+            raise RuntimeError(f"Agnes AI invalid create response: {sub}")
+        poll_url = f"https://apihub.agnes-ai.com/agnesapi?video_id={urllib.parse.quote(str(vid_id))}&model_name=agnes-video-2.5"
+        for _ in range(90):
+            time.sleep(5)
+            st = _http_json(poll_url, headers={"Authorization": f"Bearer {agnes_key}"})
+            status = str(st.get("status", "")).lower()
+            if status in ("completed", "succeeded", "success"):
+                vid_url = st.get("url") or (st.get("data") or {}).get("url")
+                if not vid_url:
+                    raise RuntimeError(f"Agnes AI completed without video URL: {st}")
+                _download_file(vid_url, out_mp4)
+                return "agnes-video-2.5"
+            if status in ("failed", "error", "canceled"):
+                raise RuntimeError(f"Agnes AI failed: {st}")
+        raise RuntimeError("Agnes AI generation timed out")
 
     # 1. Fal.ai (Kling / Minimax text-to-video)
     if fal_key:
@@ -387,7 +423,7 @@ def _call_video_api(scene: dict, ref_img_path: Path | None, out_mp4: Path) -> st
         raise RuntimeError("VEO_API_KEY endpoint requires Vertex AI / Veo long-running polling configuration.")
 
     raise RuntimeError(
-        "No AI video-generation API key configured. Add FAL_KEY, LUMA_API_KEY, or REPLICATE_API_TOKEN in GitHub Actions Secrets."
+        "No AI video-generation API key configured. Add AGNES_API_KEY, FAL_KEY, LUMA_API_KEY, or REPLICATE_API_TOKEN in GitHub Actions Secrets."
     )
 
 

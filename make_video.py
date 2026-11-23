@@ -121,6 +121,31 @@ def fetch_ai_visual(prompt, out_img, w, h, scene_idx=0, scene_text=""):
         f"(Mumbai financial office or Indian home study), illustrating: {ctx}. "
         f"Cinematic lighting, ultra detailed, no text overlay, no collage, no watermark"
     )
+    agnes_key = os.environ.get("AGNES_API_KEY", "").strip()
+    if agnes_key:
+        try:
+            import base64
+            sz = "768x1344" if h > w else "1344x768"
+            payload = json.dumps({"model": "agnes-image-2.1-flash", "prompt": full_prompt, "size": sz}).encode("utf-8")
+            req = urllib.request.Request(
+                "https://apihub.agnes-ai.com/v1/images/generations",
+                data=payload,
+                headers={"Authorization": f"Bearer {agnes_key}", "Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=45) as r:
+                res = json.loads(r.read().decode("utf-8"))
+            d0 = (res.get("data") or [{}])[0]
+            if d0.get("b64_json"):
+                Path(out_img).write_bytes(base64.b64decode(d0["b64_json"]))
+                print(f"  ✓ Agnes 3D Character ({cname}) saved: {Path(out_img).name}")
+                return str(out_img)
+            if d0.get("url"):
+                with urllib.request.urlopen(d0["url"], timeout=45) as ir:
+                    Path(out_img).write_bytes(ir.read())
+                print(f"  ✓ Agnes 3D Character ({cname}) saved: {Path(out_img).name}")
+                return str(out_img)
+        except Exception as ae:
+            print(f"  ! Agnes image fallback ({ae})")
     q = urllib.parse.quote(full_prompt)
     url = f"https://image.pollinations.ai/prompt/{q}?width={w}&height={h}&nologo=true&seed={cseed + scene_idx * 7}"
     for attempt in range(3):
