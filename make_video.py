@@ -102,22 +102,39 @@ def tts_gemini(text, out_wav):
     ])
 
 
-def fetch_ai_visual(prompt, out_img, w, h):
-    """Fetch free AI cinematic visual (Pollinations.ai, no key) with safe fallback."""
-    if not prompt:
-        return None
-    try:
-        import urllib.parse, urllib.request
-        q = urllib.parse.quote(prompt + ", dark cinematic documentary lighting, ultra detailed, 8k, no text, no watermark")
-        url = f"https://image.pollinations.ai/prompt/{q}?width={w}&height={h}&nologo=true&seed=42"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=25) as r:
-            raw = r.read()
-        if len(raw) > 5000:
-            Path(out_img).write_bytes(raw)
-            return str(out_img)
-    except Exception as e:
-        print(f"  ! AI visual skip ({e})")
+_V5_CHARS = [
+    ("Arjun", 314159, "Arjun, a 32-year-old Indian man with warm medium-brown skin, short neat black hair, light trimmed beard, thin round-framed glasses, wearing a casual navy blue linen shirt"),
+    ("Meera", 271828, "Meera, a 30-year-old Indian woman with wheatish-brown skin, shoulder-length wavy black hair, sharp attentive eyes, wearing a tailored charcoal blazer over an ivory kurta"),
+]
+
+
+def fetch_ai_visual(prompt, out_img, w, h, scene_idx=0, scene_text=""):
+    """Fetch free 3D animated Indian storytelling character visual (Pollinations.ai) with 3x retry."""
+    import urllib.parse, urllib.request
+    cname, cseed, cdesc = _V5_CHARS[scene_idx % len(_V5_CHARS)]
+    if re.search(r"\b(rbi|sebi|analyst|report|data|meera)\b", scene_text or "", re.I):
+        cname, cseed, cdesc = _V5_CHARS[1]
+    ctx = (prompt or scene_text or "Indian stock market analysis").strip()[:140]
+    full_prompt = (
+        f"Photorealistic 3D animated storytelling style, Pixar and Unreal Engine 5 realism, single unified frame. "
+        f"{cdesc}, expressive storytelling pose and facial expression, in an authentic modern Indian environment "
+        f"(Mumbai financial office or Indian home study), illustrating: {ctx}. "
+        f"Cinematic lighting, ultra detailed, no text overlay, no collage, no watermark"
+    )
+    q = urllib.parse.quote(full_prompt)
+    url = f"https://image.pollinations.ai/prompt/{q}?width={w}&height={h}&nologo=true&seed={cseed + scene_idx * 7}"
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as r:
+                raw = r.read()
+            if len(raw) > 5000:
+                Path(out_img).write_bytes(raw)
+                print(f"  ✓ 3D Character ({cname}) visual saved: {Path(out_img).name}")
+                return str(out_img)
+        except Exception as e:
+            print(f"  ! AI visual retry {attempt+1}/3 ({e})")
+            time.sleep(3)
     return None
 
 def tts_piper(text, out_wav, model="hi_IN-pratham-medium"):
@@ -653,8 +670,8 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             if chart_png is None:
                 layout = "host"
         ai_img = None
-        if not chart_png and engine != "test" and sc.get("visual_prompt"):
-            ai_img = fetch_ai_visual(sc["visual_prompt"], work / f"ai_{i}.jpg", w, h)
+        if engine != "test" and layout != "chart_full":
+            ai_img = fetch_ai_visual(sc.get("visual_prompt") or sc.get("headline") or "", work / f"ai_{i}.jpg", w, h, scene_idx=i, scene_text=sc.get("text", ""))
         fk = (i, layout, str(chart_png), str(ai_img))
         if fk not in frames:
             fp = work / f"frame{len(frames)}.png"
