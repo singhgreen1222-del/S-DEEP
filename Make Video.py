@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Script JSON -> Hindi voice -> host photo + charts -> captions -> MP4 (intro/outro included)."""
-import argparse, asyncio, json, os, re, subprocess
+import argparse, asyncio, json, os, re, subprocess, time
 from pathlib import Path
 
 import numpy as np
@@ -71,19 +71,94 @@ def _phonetic_hi(text):
     return text
 
 
+
+def tts_gemini(text, out_wav):
+    """Natural human-like Hindi/Hinglish voice using existing GEMINI_API_KEY (free tier) + silence trim + 1.08x pacing."""
+    key = os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        raise RuntimeError("No GEMINI_API_KEY")
+    import base64, urllib.request
+    payload = json.dumps({
+        "contents": [{"parts": [{"text": "Speak in a deep, authoritative, warm Indian Hindi/Hinglish male YouTuber voice (bhari, clear, confident storytelling tone): " + _phonetic_hi(text)}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": "Charon"}}}
+        }
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key={key}",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    b64 = data["candidates"][0]["content"]["parts"][0]["inlineData"]["data"]
+    raw_pcm = Path(out_wav).with_name(Path(out_wav).stem + "_gem.pcm")
+    raw_pcm.write_bytes(base64.b64decode(b64))
+    run([
+        "ffmpeg", "-y", "-loglevel", "error", "-f", "s16le", "-ar", "24000", "-ac", "1", "-i", raw_pcm,
+        "-af", "silenceremove=start_periods=1:start_silence=0.1:start_threshold=-45dB,atempo=1.08,loudnorm=I=-15:TP=-1.5:LRA=9",
+        str(out_wav),
+    ])
+
+
+_V5_CHARS = [
+    ("Arjun", 314159, "Arjun, a 32-year-old Indian man with warm medium-brown skin, short neat black hair, light trimmed beard, thin round-framed glasses, wearing a casual navy blue linen shirt"),
+    ("Meera", 271828, "Meera, a 30-year-old Indian woman with wheatish-brown skin, shoulder-length wavy black hair, sharp attentive eyes, wearing a tailored charcoal blazer over an ivory kurta"),
+]
+
+
+def fetch_ai_visual(prompt, out_img, w, h, scene_idx=0, scene_text=""):
+    """Fetch free 3D animated Indian storytelling character visual (Pollinations.ai) with 3x retry."""
+    import urllib.parse, urllib.request
+    cname, cseed, cdesc = _V5_CHARS[scene_idx % len(_V5_CHARS)]
+    if re.search(r"\b(rbi|sebi|analyst|report|data|meera)\b", scene_text or "", re.I):
+        cname, cseed, cdesc = _V5_CHARS[1]
+    ctx = (prompt or scene_text or "Indian stock market analysis").strip()[:140]
+    full_prompt = (
+        f"Photorealistic 3D animated storytelling style, Pixar and Unreal Engine 5 realism, single unified frame. "
+        f"{cdesc}, expressive storytelling pose and facial expression, in an authentic modern Indian environment "
+        f"(Mumbai financial office or Indian home study), illustrating: {ctx}. "
+        f"Cinematic lighting, ultra detailed, no text overlay, no collage, no watermark"
+    )
+    q = urllib.parse.quote(full_prompt)
+    url = f"https://image.pollinations.ai/prompt/{q}?width={w}&height={h}&nologo=true&seed={cseed + scene_idx * 7}"
+    for attempt in range(3):
+        try:
+            if attempt > 0:
+                time.sleep(4 * attempt)
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            with urllib.request.urlopen(req, timeout=45) as r:
+                raw = r.read()
+            if len(raw) > 5000:
+                Path(out_img).write_bytes(raw)
+                print(f"  ✓ 3D Character ({cname}) visual saved: {Path(out_img).name}")
+                return str(out_img)
+        except Exception as e:
+            print(f"  ! AI visual retry {attempt+1}/3 ({e})")
+            if "402" in str(e):
+                break
+            if "429" in str(e):
+                time.sleep(4)
+    # Graceful fallback: reuse previously fetched AI character image in same work folder if available
+    prev_imgs = sorted(Path(out_img).parent.glob("ai_*.jpg"))
+    if prev_imgs:
+        print(f"  ↺ Reusing {prev_imgs[-1].name} due to Pollinations rate limit")
+        return str(prev_imgs[-1])
+    return None
+
 def tts_piper(text, out_wav, model="hi_IN-pratham-medium"):
     raw_wav = Path(out_wav).with_name(Path(out_wav).stem + "_raw.wav")
     spoken = _phonetic_hi(text)
+    # Use lighter Rohan model if downloaded, else Pratham with +9% pitch lift & clarity EQ (removes heavy "data speaker" bass)
+    chosen = model
     subprocess.run(
-        ["piper", "--model", model, "--length_scale", "0.88", "--output_file", str(raw_wav)],
+        ["piper", "--model", chosen, "--length_scale", "0.90", "--output_file", str(raw_wav)],
         input=spoken.encode("utf-8"),
         check=True,
     )
-    run([
-        "ffmpeg", "-y", "-loglevel", "error", "-i", raw_wav,
-        "-af", "highpass=f=85,acompressor=threshold=-18dB:ratio=3:attack=5:release=60:makeup=4,loudnorm=I=-16:TP=-1.5:LRA=11",
-        str(out_wav),
-    ])
+    af = "aresample=22050,bass=g=2,loudnorm=I=-15:TP=-1.5:LRA=9"
+    run(["ffmpeg", "-y", "-loglevel", "error", "-i", raw_wav, "-af", af, str(out_wav)])
 
 def tts_edge(text, out_mp3, voice):
     import edge_tts
@@ -114,11 +189,15 @@ def synth(engine, text, base, ref, voice):
         if engine == "piper":
             p = base.with_suffix(".wav")
             try:
-                tts_piper(text, p)
-            except Exception as e:
-                print(f"  ! piper fail ({e}); gTTS fallback")
-                p = base.with_suffix(".mp3")
-                tts_gtts(text, p)
+                tts_gemini(text, p)
+            except Exception as ge:
+                print(f"  ! gemini-tts skip ({ge}); trying piper")
+                try:
+                    tts_piper(text, p)
+                except Exception as e:
+                    print(f"  ! piper fail ({e}); gTTS fallback")
+                    p = base.with_suffix(".mp3")
+                    tts_gtts(text, p)
         elif engine == "gtts":
             tts_gtts(text, p)
         else:
@@ -245,9 +324,15 @@ def _draw_cinematic_bg(w, h, scene_idx=0):
     return img, acc
 
 
-def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_idx=0):
+def make_frame(mode, layout, chart_png, host_path, out_png, headline="", stat="", scene_idx=0, total_scenes=1, ai_img_path=None):
     w, h = SIZES[mode]
     img, acc = _draw_cinematic_bg(w, h, scene_idx=scene_idx)
+    if ai_img_path and Path(ai_img_path).exists():
+        try:
+            ai_im = cover(Image.open(ai_img_path).convert("RGB"), w, h, cx=0.5, cy=0.5)
+            img = Image.blend(ai_im, img, 0.25)
+        except Exception:
+            pass
     d = ImageDraw.Draw(img)
     if chart_png:
         paste_fit(img, Image.open(chart_png).convert("RGB"), full_box(mode), outline=True)
@@ -257,12 +342,15 @@ def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_i
         cy0 = int(h * 0.28) if mode == "short" else int(h * 0.22)
         cy1 = int(h * 0.68) if mode == "short" else int(h * 0.72)
         d.rounded_rectangle([pad_x, cy0, w - pad_x, cy1], radius=28, fill=(13, 21, 44), outline=acc, width=4)
-        badge = f"MARKET INSIGHT #{scene_idx + 1}"
-        bf = font(30)
-        bw = d.textlength(badge, font=bf) + 44
-        d.rounded_rectangle([pad_x + 36, cy0 + 36, pad_x + 36 + bw, cy0 + 90], radius=12, fill=acc)
-        d.text((pad_x + 36 + bw / 2, cy0 + 63), badge, font=bf, fill=(10, 14, 28), anchor="mm")
-        rom = dev_to_roman(headline or "S DEEP Finance Analysis").upper()
+        badge = f"KEY POINT {scene_idx + 1}/{max(1, total_scenes)}"
+        bf = font(28)
+        bw = d.textlength(badge, font=bf) + 42
+        d.rounded_rectangle([pad_x + 36, cy0 + 34, pad_x + 36 + bw, cy0 + 84], radius=12, fill=acc)
+        d.text((pad_x + 36 + bw / 2, cy0 + 59), badge, font=bf, fill=(10, 14, 28), anchor="mm")
+        if stat:
+            sf = font(68 if mode == "short" else 74)
+            d.text((pad_x + 40, cy0 + 112), str(stat).upper()[:18], font=sf, fill=acc, stroke_width=4, stroke_fill=(0, 0, 0))
+        rom = (headline if all(ord(c) < 128 for c in (headline or "")) else dev_to_roman(headline or "S DEEP Finance")).upper()
         words = rom.split()
         lines, cur = [], ""
         max_chars = 18 if mode == "short" else 34
@@ -275,18 +363,35 @@ def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_i
                 cur = wd
         if cur:
             lines.append(cur)
-        hf = font(56 if mode == "short" else 62)
-        ty = cy0 + 135
+        hf = font(52 if mode == "short" else 58)
+        ty = cy0 + (210 if stat else 130)
         for ln in lines[:4]:
             d.text((pad_x + 40, ty), ln, font=hf, fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
             ty += 76
     bottom_shade(img, frac=0.28, maxa=190)
     d = ImageDraw.Draw(img)
+    # Glassmorphism live data card overlay when AI 3D scene + stat are present
+    if ai_img_path and stat:
+        gx0, gy0 = 36, 105
+        gx1, gy1 = min(w - 36, 560), 255
+        ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        od = ImageDraw.Draw(ov)
+        od.rounded_rectangle([gx0, gy0, gx1, gy1], radius=18, fill=(15, 20, 30, 215), outline=acc + (255,), width=3)
+        img = Image.alpha_composite(img.convert("RGBA"), ov).convert("RGB")
+        d = ImageDraw.Draw(img)
+        d.text((gx0 + 22, gy0 + 18), "MARKET SIGNAL", font=font(24), fill=acc)
+        d.text((gx0 + 22, gy0 + 52), str(stat)[:22], font=font(44), fill=(255, 255, 255))
+        if headline:
+            d.text((gx0 + 22, gy0 + 108), str(headline)[:38], font=font(22), fill=(203, 213, 225))
     d.text((34, 30), "S DEEP", font=font(50), fill=YELLOW, stroke_width=3, stroke_fill=(0, 0, 0))
     if mode == "long":
         d.text((w - 40, 44), DISCLAIMER, font=font(24), fill=(203, 213, 225), anchor="ra", stroke_width=2, stroke_fill=(0, 0, 0))
     else:
         d.text((w // 2, h - 42), DISCLAIMER, font=font(26), fill=(203, 213, 225), anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))
+    # Top progress bar
+    prog_w = int(w * (scene_idx + 1) / max(1, total_scenes))
+    d.rectangle([0, 0, w, 12], fill=(24, 34, 64))
+    d.rectangle([0, 0, prog_w, 12], fill=acc)
     img.save(out_png)
 
 
@@ -428,15 +533,22 @@ def ass_time(t):
     h, cs = divmod(cs, 360000); m, cs = divmod(cs, 6000); s, cs = divmod(cs, 100)
     return f"{h}:{m:02}:{s:02}.{cs:02}"
 
-def highlight_ass_line(line):
+def highlight_ass_line(line, dur_sec=2.5):
     rom = dev_to_roman(line)
+    words = rom.split()
+    if not words:
+        return ""
+    total_cs = max(20, int(round(dur_sec * 100)))
+    weights = [max(1, len(w)) for w in words]
+    tw = sum(weights)
     parts = []
-    for w in rom.split():
+    for w, wt in zip(words, weights):
+        k_cs = max(8, int(round(total_cs * wt / tw)))
         clean = re.sub(r"[^A-Za-z0-9%₹]", "", w).upper()
         if clean in _HI_POWER or any(ch.isdigit() for ch in w) or "%" in w or "₹" in w:
-            parts.append(r"{\c&H00D4FF&\b1}" + w.upper() + r"{\c&HFFFFFF&\b1}")
+            parts.append(rf"{{\k{k_cs}\c&H00D4FF&\b1}}{w.upper()}{{\c&HFFFFFF&\b1}}")
         else:
-            parts.append(w)
+            parts.append(rf"{{\k{k_cs}}}{w}")
     return " ".join(parts)
 
 def srt_time(t):
@@ -450,6 +562,60 @@ def caption_lines(text, per):
     return [" ".join(words[i:i + per]) for i in range(0, len(words), per)] or [text]
 
 
+
+def fetch_pexels_broll(query, out_mp4):
+    """Optional free Pexels HD stock B-roll fallback if PEXELS_API_KEY is set."""
+    key = os.environ.get("PEXELS_API_KEY", "").strip()
+    if not key:
+        return None
+    try:
+        import urllib.request, urllib.parse
+        req = urllib.request.Request(
+            f"https://api.pexels.com/videos/search?query={urllib.parse.quote(query[:60])}&per_page=1&orientation=landscape",
+            headers={"Authorization": key, "User-Agent": "S-DEEP-V5/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        vids = data.get("videos") or []
+        if vids:
+            files = sorted(vids[0].get("video_files") or [], key=lambda x: x.get("width", 0), reverse=True)
+            if files and files[0].get("link"):
+                with urllib.request.urlopen(files[0]["link"], timeout=45) as vr:
+                    Path(out_mp4).write_bytes(vr.read())
+                return str(out_mp4)
+    except Exception:
+        pass
+    return None
+
+
+def _gen_pop_sfx(out_wav):
+    """Synthesize a clean subtle pop/chime SFX using ffmpeg lavfi (100% free)."""
+    try:
+        run([
+            "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.18",
+            "-i", "sine=frequency=880:sample_rate=44100",
+            "-af", "afade=t=in:st=0:d=0.02,afade=t=out:st=0.05:d=0.13,volume=0.22",
+            str(out_wav)
+        ])
+        return str(out_wav)
+    except Exception:
+        return None
+
+
+def extract_short_from_long(long_mp4, out_short_mp4, start_sec=15, dur=45):
+    """Auto-cut a 45s 9:16 Short (1080x1920) from a finished 16:9 Long video."""
+    try:
+        run([
+            "ffmpeg", "-y", "-loglevel", "error", "-ss", str(start_sec), "-t", str(dur),
+            "-i", str(long_mp4),
+            "-vf", "scale=1920:1080,crop=608:1080:(1920-608)/2:0,scale=1080:1920",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "21", "-c:a", "aac", "-b:a", "192k",
+            str(out_short_mp4)
+        ])
+        return True
+    except Exception:
+        return False
+
 # ---------------- main renderer ----------------
 def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-MadhurNeural",
                  host=None, music=None, intro=True, log=print):
@@ -460,7 +626,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
     work.mkdir(parents=True, exist_ok=True)
     clips, srt, t, n, chapters = [], [], 0.0, 1, []
     if intro:
-        clips.append(card_clip(mode, "S DEEP", "Finance | Share Market | Indian Economy", work / "intro")); t += CARD
+        clips.append(card_clip(mode, (cfg.get("title") or "S DEEP")[:26], "S DEEP | Market Signal & Analysis", work / "intro")); t += CARD
     charts, frames, scenes = {}, {}, cfg["scenes"]
     for i, sc in enumerate(scenes):
         log(f"[{slug}] scene {i + 1}/{len(scenes)}")
@@ -492,7 +658,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             # Provider returns a finished talking-head clip with its own synchronized audio.
             dur = media_duration(normalized_clip)
             clips.append(normalized_clip.name)
-            lines = caption_lines(sc["text"], 5 if mode == "short" else 8)
+            lines = caption_lines(sc.get("caption") or sc["text"], 5 if mode == "short" else 8)
             weights = [len(l) for l in lines]; tw, tt = sum(weights), t
             for l, wt in zip(lines, weights):
                 d_ = dur * wt / tw
@@ -513,15 +679,27 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             chart_png = charts[key]
             if chart_png is None:
                 layout = "host"
-        fk = (i, layout, str(chart_png))
+        ai_img = None
+        if engine != "test" and layout != "chart_full":
+            ai_img = fetch_ai_visual(sc.get("visual_prompt") or sc.get("headline") or "", work / f"ai_{i}.jpg", w, h, scene_idx=i, scene_text=sc.get("text", ""))
+        fk = (i, layout, str(chart_png), str(ai_img))
         if fk not in frames:
             fp = work / f"frame{len(frames)}.png"
-            make_frame(mode, layout, chart_png, None, fp, headline=sc["text"][:90], scene_idx=i)
+            make_frame(mode, layout, chart_png, None, fp, headline=sc.get("headline") or sc.get("caption") or sc["text"][:80], stat=sc.get("stat", ""), scene_idx=i, total_scenes=len(scenes), ai_img_path=ai_img)
             frames[fk] = fp
         total = dur + PAD
         clip = work / f"clip{i}.mp4"
         n_frames = max(1, int(round(total * int(FPS))))
-        zp = f"scale=iw*1.08:ih*1.08,zoompan=z='min(zoom+0.0005,1.08)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
+        # Dynamic motion-image camera choreography (alternating push-in, pan-right, zoom-out, pan-left)
+        _m = i % 4
+        if _m == 0:
+            zp = f"scale=iw*1.16:ih*1.16,zoompan=z='min(zoom+0.0018,1.16)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
+        elif _m == 1:
+            zp = f"scale=iw*1.18:ih*1.18,zoompan=z='1.12':d={n_frames}:x='(iw-iw/zoom)*on/{max(1,n_frames)}':y='(ih-ih/zoom)/2':s={w}x{h}:fps={FPS}"
+        elif _m == 2:
+            zp = f"scale=iw*1.16:ih*1.16,zoompan=z='max(1.15-0.0016*on,1.0)':d={n_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={w}x{h}:fps={FPS}"
+        else:
+            zp = f"scale=iw*1.18:ih*1.18,zoompan=z='1.12':d={n_frames}:x='(iw-iw/zoom)*(1-on/{max(1,n_frames)})':y='(ih-ih/zoom)/2':s={w}x{h}:fps={FPS}"
         run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", FPS, "-i", frames[fk], "-i", audio,
              "-vf", zp, "-af", f"apad=pad_dur={PAD}", "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "fast",
              "-pix_fmt", "yuv420p", "-r", FPS, "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", clip])
@@ -552,7 +730,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             st_s, en_s = [x.strip().replace(",", ".") for x in parts[1].split("-->")]
             st_sec = sum(float(x) * m for x, m in zip(st_s.split(":"), (3600, 60, 1)))
             en_sec = sum(float(x) * m for x, m in zip(en_s.split(":"), (3600, 60, 1)))
-            ass_lines.append(f"Dialogue: 0,{ass_time(st_sec)},{ass_time(en_sec)},Default,,0,0,0,,{highlight_ass_line(' '.join(parts[2:]))}")
+            ass_lines.append(f"Dialogue: 0,{ass_time(st_sec)},{ass_time(en_sec)},Default,,0,0,0,,{highlight_ass_line(' '.join(parts[2:]), max(0.5, en_sec - st_sec))}")
     (work / "subs.ass").write_text("\n".join(ass_lines), encoding="utf-8")
     (work / "subs.srt").write_text("\n".join(srt), encoding="utf-8")
     (work / "chapters.json").write_text(json.dumps(chapters, ensure_ascii=False), encoding="utf-8")
@@ -568,10 +746,26 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
     if music and Path(music).exists():
         run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-stream_loop", "-1", "-i",
              Path(music).resolve(), "-filter_complex",
-             f"[0:v]{vf}[v];[1:a]volume=0.07[m];[0:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]",
+             f"[0:v]{vf}[v];[1:a]volume=0.10[m];[m][0:a]sidechaincompress=threshold=0.03:ratio=6:attack=50:release=300[duck];[0:a][duck]amix=inputs=2:duration=first:dropout_transition=0,loudnorm=I=-14:TP=-1.0:LRA=7[a]",
              "-map", "[v]", "-map", "[a]", *enc, out], cwd=work)
     else:
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-vf", vf, *enc, out], cwd=work)
+        run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "5", "-i", "sine=frequency=110:sample_rate=44100", "-af", "volume=0.025,lowpass=f=220", "ambient.wav"], cwd=work)
+        run(["ffmpeg", "-y", "-loglevel", "error", "-i", "joined.mp4", "-stream_loop", "-1", "-i", "ambient.wav",
+             "-filter_complex", f"[0:v]{vf}[v];[1:a][0:a]sidechaincompress=threshold=0.03:ratio=5:attack=50:release=300[duck];[0:a][duck]amix=inputs=2:duration=first:dropout_transition=0,loudnorm=I=-14:TP=-1.0:LRA=7[a]",
+             "-map", "[v]", "-map", "[a]", *enc, out], cwd=work)
+
+    # V5: Auto YouTube chapters, pinned comment, and Long-to-Short auto cut
+    if chapters:
+        ch_lines = []
+        for ts, lbl in chapters:
+            mm, ss = divmod(int(ts), 60)
+            ch_lines.append(f"{mm:02d}:{ss:02d} {lbl}")
+        (out_dir / f"{slug}_chapters.txt").write_text("\n".join(ch_lines), encoding="utf-8")
+    srcs = "\n".join(cfg.get("sources") or [])
+    pinned = f"Aapka is par kya view hai? Comment mein zaroor batayein!\n\nSources:\n{srcs}" if srcs else "Aapka is par kya view hai? Comment mein zaroor batayein!"
+    (out_dir / f"{slug}_pinned_comment.txt").write_text(pinned, encoding="utf-8")
+    if mode == "long" and media_duration(out) > 60:
+        extract_short_from_long(out, out_dir / f"{slug}_auto_short.mp4", start_sec=15, dur=45)
     final = media_duration(out)
     msg = f"DONE {out.name} ({final / 60:.1f} min, {w}x{h}, {FPS}fps)"
     if mode == "long" and not 18 * 60 <= final <= 22 * 60:
