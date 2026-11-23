@@ -74,16 +74,15 @@ def _phonetic_hi(text):
 def tts_piper(text, out_wav, model="hi_IN-pratham-medium"):
     raw_wav = Path(out_wav).with_name(Path(out_wav).stem + "_raw.wav")
     spoken = _phonetic_hi(text)
+    # Use lighter Rohan model if downloaded, else Pratham with +9% pitch lift & clarity EQ (removes heavy "data speaker" bass)
+    chosen = "hi_IN-rohan-medium" if Path("hi_IN-rohan-medium.onnx").exists() else model
     subprocess.run(
-        ["piper", "--model", model, "--length_scale", "0.88", "--output_file", str(raw_wav)],
+        ["piper", "--model", chosen, "--length_scale", "0.86", "--output_file", str(raw_wav)],
         input=spoken.encode("utf-8"),
         check=True,
     )
-    run([
-        "ffmpeg", "-y", "-loglevel", "error", "-i", raw_wav,
-        "-af", "highpass=f=85,acompressor=threshold=-18dB:ratio=3:attack=5:release=60:makeup=4,loudnorm=I=-16:TP=-1.5:LRA=11",
-        str(out_wav),
-    ])
+    af = "highpass=f=125,asetrate=22050*1.09,aresample=22050,atempo=0.96,treble=g=3,loudnorm=I=-15:TP=-1.5:LRA=9"
+    run(["ffmpeg", "-y", "-loglevel", "error", "-i", raw_wav, "-af", af, str(out_wav)])
 
 def tts_edge(text, out_mp3, voice):
     import edge_tts
@@ -245,7 +244,7 @@ def _draw_cinematic_bg(w, h, scene_idx=0):
     return img, acc
 
 
-def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_idx=0):
+def make_frame(mode, layout, chart_png, host_path, out_png, headline="", stat="", scene_idx=0, total_scenes=1):
     w, h = SIZES[mode]
     img, acc = _draw_cinematic_bg(w, h, scene_idx=scene_idx)
     d = ImageDraw.Draw(img)
@@ -257,12 +256,15 @@ def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_i
         cy0 = int(h * 0.28) if mode == "short" else int(h * 0.22)
         cy1 = int(h * 0.68) if mode == "short" else int(h * 0.72)
         d.rounded_rectangle([pad_x, cy0, w - pad_x, cy1], radius=28, fill=(13, 21, 44), outline=acc, width=4)
-        badge = f"MARKET INSIGHT #{scene_idx + 1}"
-        bf = font(30)
-        bw = d.textlength(badge, font=bf) + 44
-        d.rounded_rectangle([pad_x + 36, cy0 + 36, pad_x + 36 + bw, cy0 + 90], radius=12, fill=acc)
-        d.text((pad_x + 36 + bw / 2, cy0 + 63), badge, font=bf, fill=(10, 14, 28), anchor="mm")
-        rom = dev_to_roman(headline or "S DEEP Finance Analysis").upper()
+        badge = f"KEY POINT {scene_idx + 1}/{max(1, total_scenes)}"
+        bf = font(28)
+        bw = d.textlength(badge, font=bf) + 42
+        d.rounded_rectangle([pad_x + 36, cy0 + 34, pad_x + 36 + bw, cy0 + 84], radius=12, fill=acc)
+        d.text((pad_x + 36 + bw / 2, cy0 + 59), badge, font=bf, fill=(10, 14, 28), anchor="mm")
+        if stat:
+            sf = font(68 if mode == "short" else 74)
+            d.text((pad_x + 40, cy0 + 112), str(stat).upper()[:18], font=sf, fill=acc, stroke_width=4, stroke_fill=(0, 0, 0))
+        rom = (headline if all(ord(c) < 128 for c in (headline or "")) else dev_to_roman(headline or "S DEEP Finance")).upper()
         words = rom.split()
         lines, cur = [], ""
         max_chars = 18 if mode == "short" else 34
@@ -287,6 +289,10 @@ def make_frame(mode, layout, chart_png, host_path, out_png, headline="", scene_i
         d.text((w - 40, 44), DISCLAIMER, font=font(24), fill=(203, 213, 225), anchor="ra", stroke_width=2, stroke_fill=(0, 0, 0))
     else:
         d.text((w // 2, h - 42), DISCLAIMER, font=font(26), fill=(203, 213, 225), anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))
+    # Top progress bar
+    prog_w = int(w * (scene_idx + 1) / max(1, total_scenes))
+    d.rectangle([0, 0, w, 12], fill=(24, 34, 64))
+    d.rectangle([0, 0, prog_w, 12], fill=acc)
     img.save(out_png)
 
 
@@ -492,7 +498,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
             # Provider returns a finished talking-head clip with its own synchronized audio.
             dur = media_duration(normalized_clip)
             clips.append(normalized_clip.name)
-            lines = caption_lines(sc["text"], 5 if mode == "short" else 8)
+            lines = caption_lines(sc.get("caption") or sc["text"], 5 if mode == "short" else 8)
             weights = [len(l) for l in lines]; tw, tt = sum(weights), t
             for l, wt in zip(lines, weights):
                 d_ = dur * wt / tw
@@ -516,7 +522,7 @@ def render_video(cfg, slug, out_dir, engine="piper", ref=None, voice="hi-IN-Madh
         fk = (i, layout, str(chart_png))
         if fk not in frames:
             fp = work / f"frame{len(frames)}.png"
-            make_frame(mode, layout, chart_png, None, fp, headline=sc["text"][:90], scene_idx=i)
+            make_frame(mode, layout, chart_png, None, fp, headline=sc.get("headline") or sc.get("caption") or sc["text"][:80], stat=sc.get("stat", ""), scene_idx=i, total_scenes=len(scenes))
             frames[fk] = fp
         total = dur + PAD
         clip = work / f"clip{i}.mp4"

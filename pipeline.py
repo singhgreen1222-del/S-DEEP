@@ -105,12 +105,15 @@ def news_block(items):
 
 
 # ---------------- LLM scripts (SEO + learnings) ----------------
-RULES = ("You write for S DEEP, a Hindi finance YouTube channel about the Indian share market and economy. "
-         "Output language: Hindi in Devanagari (terms like Nifty, Sensex, RBI, SEBI, GDP, FII may stay in English). "
+RULES = ("You write for S DEEP, a high-retention Indian finance YouTube channel (style: Dhruv Rathee / Finshots — conversational, sharp, crystal-clear). "
+         "VOICE STYLE ('text' field): Write natural everyday bolchal Hindi in Devanagari mixed smoothly with common English words in English script "
+         "(e.g., 'SEBI ने एक बड़ा step लिया है — अब independent directors को proper training मिलेगी, जिससे corporate governance और strong होगा।'). "
+         "NEVER use stiff, bookish Sanskritized Hindi like 'वित्तीय साक्षरता' or 'शैक्षिक सामग्री'. "
+         "SUBTITLE STYLE ('caption' field): Write the EXACT same sentence in clean, accurate Roman Hinglish with zero spelling errors "
+         "(e.g., 'SEBI ne ek bada step liya hai — ab independent directors ko proper training milegi!'). "
          "Use ONLY facts present in the NEWS ITEMS below. Never invent numbers, dates, quotes, companies or links. "
-         "If a number is not in the items, do not state it. Clearly separate facts from expectations/opinion (say 'अनुमान'). "
-         "Mention the source name and date for key claims. No guaranteed returns, no buy/sell/hold advice, no stock tips. "
-         "End with one short line: educational content, not investment advice. Return ONLY valid JSON.\n")
+         "Clearly separate facts from estimates (say 'anuman' / 'estimate'). Mention source name and date. "
+         "No guaranteed returns, no buy/sell/hold tips. End with: 'Ye sirf educational update hai, investment advice nahi.' Return ONLY valid JSON.\n")
 SEO = ("SEO rules: title <=60 chars, main search keyword inside the first 40 chars, honest curiosity (no fake claims, no ALL CAPS). "
        "description: first 2 lines contain the main keywords and summarise the video (150+ words for long, 40+ words for short). "
        "keywords: 8-15 search phrases people actually type (Hindi + Roman/English). hashtags: exactly 3, like #Nifty #ShareMarket #SDEEP.\n")
@@ -206,9 +209,9 @@ def _unsupported(texts, news):
     return sorted(norm(texts) - norm(news))
 
 
-SHORT_SCHEMA = ('Write ONE YouTube Shorts script: 70-95 spoken words, 4-6 scenes, first scene is a hook. Return JSON: '
+SHORT_SCHEMA = ('Write ONE high-retention YouTube Shorts script: 75-100 spoken words, 5-7 fast-paced scenes, first scene is a strong curiosity hook. Return JSON: '
                 '{"title":"","thumb_text":"2-4 WORDS ROMAN CAPS","thumb_badge":"1-2 WORDS e.g. BREAKING","thumb_theme":"bullish|gold|alert|blue","description":"","keywords":[],"hashtags":[],"tags":[],'
-                '"sources":["urls copied exactly from items"],"scenes":[{"text":"Hindi text","chart":null}]}. '
+                '"sources":["urls copied exactly from items"],"scenes":[{"text":"Bolchal Hindi+English voiceover","caption":"Clean Roman Hinglish subtitle","headline":"2-4 WORD VISUAL TITLE","stat":"optional short number/date or empty","chart":null}]}. '
                 'Set "chart" to "^NSEI" or "^BSESN" for ONE scene only if it discusses the overall index trend.\n')
 OUTLINE_SCHEMA = ('Plan a 20-minute long video in exactly 10 sections (hook, context, 3-4 news deep dives, what to watch next, '
                   'risks/uncertainties, recap + disclaimer). Return JSON: {"title":"","thumb_text":"2-4 WORDS ROMAN CAPS","thumb_badge":"1-2 WORDS e.g. BREAKING","thumb_theme":"bullish|gold|alert|blue","description":"",'
