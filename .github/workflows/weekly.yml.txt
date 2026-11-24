@@ -1,0 +1,79 @@
+name: S DEEP automation
+on:
+  schedule:
+    - cron: "30 20 * * *"
+    - cron: "30 4 * * 6"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dryrun = test 1080p Short | daily | weekly"
+        default: "dryrun"
+        type: choice
+        options: [dryrun, daily, weekly]
+permissions:
+  contents: write
+concurrency:
+  group: sdeep
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      MODE: ${{ github.event.inputs.mode || (github.event.schedule == '30 4 * * 6' && 'weekly' || 'daily') }}
+      ENGINE: piper
+      GEMINI_MODEL: gemini-3.6-flash
+      DRYRUN_ENGINE: piper
+      HEYGEN_CONFIRM_BILLING: "false"
+      MAX_UPLOADS_PER_RUN: "5"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install system dependencies (1080p FFmpeg + Fonts)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-dejavu-core
+      - name: Install Python dependencies + Commercial-Safe Piper TTS
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install piper-tts
+          python3 -m piper.download_voices hi_IN-pratham-medium
+      - name: Run Automated Free Pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: python run.py "$MODE"
+      - name: Test video (dryrun)
+        if: always() && env.MODE == 'dryrun'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dryrun-1080p-video
+          path: |
+            work/out/*.mp4
+            work/out/*.jpg
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Save dryrun preview
+        if: always() && env.MODE == 'dryrun'
+        run: |
+          mkdir -p data
+          MP4=$(ls -t work/out/*.mp4 2>/dev/null | head -n 1 || true)
+          [ -n "$MP4" ] && cp "$MP4" data/dryrun_preview.mp4 || true
+          JPG=$(ls -t work/out/*.jpg 2>/dev/null | head -n 1 || true)
+          [ -n "$JPG" ] && cp "$JPG" data/dryrun_preview.jpg || true
+          JSN=$(ls -t work/dryrun_scripts/*.json 2>/dev/null | head -n 1 || true)
+          [ -n "$JSN" ] && cp "$JSN" data/dryrun_preview.json || true
+      - name: Save data to GitHub
+        if: always()
+        run: |
+          git config user.name "sdeep-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -A data
+          git add REPORT.md 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "auto: $MODE" && git pull --rebase && git push)
